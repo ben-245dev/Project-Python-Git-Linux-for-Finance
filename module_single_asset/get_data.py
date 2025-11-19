@@ -4,7 +4,9 @@ import pandas as pd
 API_KEY = "d4evlp1r01qrcbrulkd0d4evlp1r01qrcbrulkdg"  # key Finnhub
 
 symbol = "AAPL"
-url = f"https://finnhub.io/api/v1/quote?symbol={symbol}&token={API_KEY}"
+ # url = f"https://finnhub.io/api/v1/quote?symbol={symbol}&token={API_KEY}"
+url = f"https://finnhub.io/api/v1/stock/candle?symbol={symbol}&resolution=D&from=1615298999&to=1615898999&token={API_KEY}"
+
 
 response = requests.get(url)
 data = response.json()
