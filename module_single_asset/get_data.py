@@ -1,16 +1,39 @@
 import requests
 import pandas as pd
+import time
 
 API_KEY = "d4evlp1r01qrcbrulkd0d4evlp1r01qrcbrulkdg"  # key Finnhub
-
 symbol = "AAPL"
- # url = f"https://finnhub.io/api/v1/quote?symbol={symbol}&token={API_KEY}"
-url = f"https://finnhub.io/api/v1/stock/candle?symbol={symbol}&resolution=D&from=1615298999&to=1615898999&token={API_KEY}"
+resolution = "D"  # Données journalières
 
+# période : 1 an
+to_date = int(time.time())
+from_date = to_date - 365 * 24 * 60 * 60  #1 an en secondes
 
-response = requests.get(url)
+url = f"https://finnhub.io/api/v1/stock/candle"
+params = {
+    "symbol": symbol,
+    "resolution": resolution,
+    "from": from_date,
+    "to": to_date,
+    "token": API_KEY
+}
+
+response = requests.get(url, params=params)
 data = response.json()
 
-df = pd.DataFrame([data])
-print(df)
-df.to_csv("data_aapl.csv", index=False)
+if data["s"] == "ok":
+    # Transformer en DataFrame
+    df = pd.DataFrame({
+        "Date": pd.to_datetime(data["t"], unit="s"),
+        "Open": data["o"],
+        "High": data["h"],
+        "Low": data["l"],
+        "Close": data["c"],
+        "Volume": data["v"]
+    })
+    df.to_csv("data_aapl.csv", index=False)
+    print("Sauvegarde réussie !")
+else:
+    print("Erreur : pas de données")
+
