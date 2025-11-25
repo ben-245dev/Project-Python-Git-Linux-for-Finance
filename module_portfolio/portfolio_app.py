@@ -46,9 +46,9 @@ for i in range(N_assets):
     
     # Input numérique pour le poids (Allocation personnalisable)
     weight = col_weights[i].number_input(
-        f"Poids {name}",
-        min_value=0.0,
-        max_value=1.0,
+    f"Poids {name}",
+    min_value=-1.0, # Autoriser les positions courtes (Short)
+    max_value=2.0,  # Autoriser l'effet de levier sur le Long
         value=1.0 / N_assets, # Équipondération par défaut
         step=0.01,
         format="%.2f",
@@ -180,3 +180,10 @@ if col_button.button("Lancer l'Analyse du Portefeuille"):
         })
         fig_pie = px.pie(df_weights, values='Weight', names='Asset', title="Allocation des actifs")
         st.plotly_chart(fig_pie)
+
+        gross_exposure = np.sum(np.abs(weights)) * 100
+        st.metric("Exposition Brute (Risque total)", f"{gross_exposure:.0f} %")
+        if gross_exposure > 100:
+            st.warning("⚠️ Exposition brute supérieure à 100% : Le portefeuille utilise de l'effet de levier ou des positions courtes.")
+        
+        
