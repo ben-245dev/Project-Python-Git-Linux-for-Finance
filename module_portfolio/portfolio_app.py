@@ -171,19 +171,34 @@ if col_button.button("Lancer l'Analyse du Portefeuille"):
         )
         st.plotly_chart(fig_corr, use_container_width=True)
 
-        # 7.3 Composition du portefeuille (Pie Chart)
-        st.subheader("Répartition de l'Allocation")
-        
+        ## 7.3 Bar Chart d'Exposition (Gestion Long/Short)
+        st.subheader("Exposition par Actif (Long/Short)")
+            
         df_weights = pd.DataFrame({
-            'Asset': data.columns,
-            'Weight': weights
-        })
-        fig_pie = px.pie(df_weights, values='Weight', names='Asset', title="Allocation des actifs")
-        st.plotly_chart(fig_pie)
+                'Asset': data.columns,
+                'Weight': weights
+            })
+            
+            # Utilisation d'un Bar Chart (px.bar) qui gère les valeurs négatives
+        fig_bar = px.bar(
+                df_weights, 
+                x='Asset', 
+                y='Weight', 
+                title='Poids du Portefeuille (Positions Longues et Courtes)',
+                color='Weight', # Colorier les barres selon leur signe (Long ou Short)
+                color_continuous_scale=['red', 'blue'] # Rouge pour Short, Bleu pour Long (simple convention)
+            )
+            
+            # Ajout d'une ligne horizontale à zéro pour mieux visualiser les shorts
+        fig_bar.add_hline(y=0, line_dash="solid", line_color="white")
+            
+            # Ajuster les étiquettes de l'axe Y pour indiquer le %
+        fig_bar.update_layout(yaxis_tickformat=".0%")
+            
+        st.plotly_chart(fig_bar, use_container_width=True)
 
         gross_exposure = np.sum(np.abs(weights)) * 100
         st.metric("Exposition Brute (Risque total)", f"{gross_exposure:.0f} %")
         if gross_exposure > 100:
             st.warning("⚠️ Exposition brute supérieure à 100% : Le portefeuille utilise de l'effet de levier ou des positions courtes.")
-        
         
