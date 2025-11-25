@@ -62,8 +62,25 @@ col_date_start, col_date_end, col_button = st.columns(3)
 start_date = col_date_start.date_input("Date de début", pd.to_datetime("2023-01-01"))
 end_date = col_date_end.date_input("Date de fin", pd.to_datetime("today"))
 
+
+st.sidebar.markdown("---")
+st.sidebar.subheader("Paramètres Financiers")
+# Investissement initial en euros (€)
+initial_investment = st.sidebar.number_input(
+    "Investissement initial (€)", 
+    min_value=100.0, 
+    value=10000.0, 
+    step=500.0
+)
+
 # Taux sans risque (pour le Sharpe Ratio)
-risk_free_rate = st.sidebar.number_input("Taux sans risque annuel (%)", min_value=0.0, max_value=10.0, value=2.0, step=0.1) / 100
+risk_free_rate = st.sidebar.number_input(
+    "Taux sans risque annuel (%)", 
+    min_value=0.0, 
+    max_value=10.0, 
+    value=2.0, 
+    step=0.1
+) / 100
 
 # Le bouton de lancement est sur la page principale
 if col_button.button("Lancer l'Analyse du Portefeuille"):
@@ -108,6 +125,14 @@ if col_button.button("Lancer l'Analyse du Portefeuille"):
         portfolio_return_daily = returns.dot(weights)
         cumulative_portfolio = (1 + portfolio_return_daily).cumprod()
         
+        # Ratio du prix final au prix initial (cumulative_portfolio est basé sur 1 au départ)
+        final_portfolio_ratio = cumulative_portfolio.iloc[-1]
+
+# Rendement Total sur la période (Rate of Return)
+        total_rate_of_return = (final_portfolio_ratio - 1) * 100
+
+# Montant Final en Euros
+        final_portfolio_value = final_portfolio_ratio * initial_investment
         # Métriques Annualisées
         annual_return = portfolio_return_daily.mean() * 252 * 100
         annual_volatility = portfolio_return_daily.std() * np.sqrt(252) * 100
