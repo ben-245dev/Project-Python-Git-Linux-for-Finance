@@ -38,4 +38,26 @@ def get_live_index_data():
             data[name] = None
     return data
 
+def load_ticker_data(ticker: str, period: str) -> pd.DataFrame:
+    df = yf.download(
+        ticker,
+        period=period,
+        auto_adjust=True,
+        progress=False,
+        multi_level_index=False,
+    )
+    return df.dropna()
+
+
+def get_price_series(df: pd.DataFrame, field: str, ticker: str) -> pd.Series:
+    if isinstance(df.columns, pd.MultiIndex):
+        if (field, ticker) in df.columns:
+            return df[(field, ticker)]
+        if field in df.columns.get_level_values(0):
+            return df[field]
+        raise KeyError(f"Colonne {(field, ticker)} ou {field} introuvable dans df.columns")
+    else:
+        if field not in df.columns:
+            raise KeyError(f"Colonne {field} introuvable dans df.columns")
+        return df[field]
 
