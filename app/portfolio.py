@@ -28,34 +28,26 @@ def page_portfolio():
         key="port_n_assets",
     )
 
-    TICKER_OPTIONS = [
-        "AAPL",
-        "MSFT",
-        "GOOGL",
-        "NVDA",
-        "TSLA",
-        "AMZN",
-        "BTC-USD",
-        "ETH-USD",
-        "EURUSD=X",
-        "GC=F",
-    ]
-
-    asset_names = []
+    # Saisie libre des tickers (séparés par des virgules)
+    tickers_input = st.text_input(
+        "Liste des tickers (séparés par des virgules)",
+        value="AAPL, MSFT, GOOGL, NVDA",  # exemple par défaut
+        key="port_tickers_input",
+    )
+    
+    # On parse la chaîne en liste de tickers, on enlève les espaces vides
+    asset_names = [t.strip() for t in tickers_input.split(",") if t.strip()]
+    
+    # On force N_assets à ne pas dépasser le nombre de tickers saisis
+    if len(asset_names) < 3:
+        st.warning("Veuillez saisir au moins 3 tickers pour le portefeuille.")
+    N_assets = min(N_assets, len(asset_names))
+    
     weights_input = []
-
-    col_names = st.columns(N_assets)
     col_weights = st.columns(N_assets)
-
+    
     for i in range(N_assets):
-        name = col_names[i].selectbox(
-            f"Actif #{i+1}",
-            options=TICKER_OPTIONS,
-            index=i % len(TICKER_OPTIONS),
-            key=f"port_asset_{i}",
-        )
-        asset_names.append(name)
-
+        name = asset_names[i]
         weight = col_weights[i].number_input(
             f"Poids {name}",
             min_value=-1.0,
@@ -66,6 +58,7 @@ def page_portfolio():
             key=f"port_weight_{i}",
         )
         weights_input.append(weight)
+
 
     st.markdown("---")
     col_date_start, col_date_end, col_button = st.columns(3)
@@ -359,4 +352,5 @@ def page_portfolio():
                 yaxis_title="Fréquence",
                 margin=dict(l=10, r=10, t=30, b=10),
             )
+
             st.plotly_chart(fig_port_hist, use_container_width=True)
