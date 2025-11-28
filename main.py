@@ -54,4 +54,25 @@ TRADING_TIMEZONES = {
 }
 
 
+def main():
+    st.sidebar.title("Navigation")
+    if st.sidebar.button("🔄 Recharger l'application"):
+        st.rerun()
+
+    page = st.sidebar.radio(
+        "Aller à",
+        ["Accueil", "Stratégie de trading et backtest", "Portefeuille multi-actifs"],
+        index=0,
+    )
+
+    if page == "Accueil":
+        page_home()
+    elif page == "Stratégie de trading et backtest":
+        page_strategy()
+    else:
+        page_portfolio()
+
+
+if __name__ == "__main__":
+    main()
 
