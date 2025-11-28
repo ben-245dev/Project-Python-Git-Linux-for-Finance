@@ -21,43 +21,50 @@ def page_portfolio():
 
     st.subheader("Configuration des Actifs et des Poids")
 
+    # 1) Nombre d'actifs
     N_assets = st.selectbox(
-        "Choisissez le nombre d'actifs dans le portefeuille (min. 3) :",
-        options=list(range(3, 11)),
+        "Nombre d'actifs dans le portefeuille (min. 3) :",
+        options=list(range(3, 21)),
         index=0,
         key="port_n_assets",
     )
-
-    # Saisie libre des tickers (séparés par des virgules)
+    
+    # 2) Saisie libre des tickers
+    default_tickers = "AAPL, MSFT, GOOGL, NVDA"
     tickers_input = st.text_input(
         "Liste des tickers (séparés par des virgules)",
-        value="AAPL, MSFT, GOOGL, NVDA",  # exemple par défaut
+        value=default_tickers,
         key="port_tickers_input",
     )
     
-    # On parse la chaîne en liste de tickers, on enlève les espaces vides
-    asset_names = [t.strip() for t in tickers_input.split(",") if t.strip()]
+    # Parse en liste propre
+    all_tickers = [t.strip() for t in tickers_input.split(",") if t.strip()]
     
-    # On force N_assets à ne pas dépasser le nombre de tickers saisis
-    if len(asset_names) < 3:
+    if len(all_tickers) < 3:
         st.warning("Veuillez saisir au moins 3 tickers pour le portefeuille.")
-    N_assets = min(N_assets, len(asset_names))
+        return
+    
+    # On ne garde que les N_assets premiers tickers saisis
+    asset_names = all_tickers[:N_assets]
+    
+    # 3) Poids configurables pour chaque actif
+    st.markdown("### Poids du portefeuille (Long/Short possibles)")
     
     weights_input = []
-    col_weights = st.columns(N_assets)
+    cols = st.columns(len(asset_names))
     
-    for i in range(N_assets):
-        name = asset_names[i]
-        weight = col_weights[i].number_input(
-            f"Poids {name}",
-            min_value=-1.0,
-            max_value=2.0,
-            value=1.0 / N_assets,
-            step=0.01,
-            format="%.2f",
-            key=f"port_weight_{i}",
-        )
-        weights_input.append(weight)
+    for i, name in enumerate(asset_names):
+        with cols[i]:
+            w = st.number_input(
+                f"Poids {name}",
+                min_value=-1.0,
+                max_value=2.0,
+                value=1.0 / len(asset_names),  # équipondération par défaut
+                step=0.01,
+                format="%.2f",
+                key=f"port_weight_{i}",
+            )
+            weights_input.append(w)
 
 
     st.markdown("---")
@@ -354,3 +361,4 @@ def page_portfolio():
             )
 
             st.plotly_chart(fig_port_hist, use_container_width=True)
+
