@@ -75,3 +75,26 @@ def page_portfolio():
     end_date = col_date_end.date_input(
         "Date de fin", pd.to_datetime("today"), key="port_end"
     )
+
+    # Paramètres financiers dans la sidebar
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("Paramètres Financiers (Portefeuille)")
+    initial_investment = st.sidebar.number_input(
+        "Investissement initial (€)",
+        min_value=100.0,
+        value=10000.0,
+        step=500.0,
+        key="port_init_inv",
+    )
+
+    risk_free_rate = (
+        st.sidebar.number_input(
+            "Taux sans risque annuel (%)",
+            min_value=0.0,
+            max_value=10.0,
+            value=2.0,
+            step=0.1,
+            key="port_rf",
+        )
+        / 100
+    )
