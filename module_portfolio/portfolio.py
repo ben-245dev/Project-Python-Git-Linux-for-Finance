@@ -259,5 +259,105 @@ def page_portfolio():
                     "⚠️ Exposition brute supérieure à 100% : "
                     "Le portefeuille utilise de l'effet de levier ou des positions courtes."
                 )
+                
+            # -----------------------------
+            # Stratégies appliquées au portefeuille
+            # -----------------------------
+            port_params = {
+                "mom_lookback": port_mom_lb,
+                "fast_ma": port_fast_ma,
+                "slow_ma": port_slow_ma,
+                "breakout_lookback": port_breakout_lb,
+            }
+
+            port_strategies = build_strategies(price_portfolio, port_params)
+            port_strat = port_strategies[port_strategy_name]
+            port_strat_returns = port_strat["returns"]
+            port_strat_equity = port_strat["equity"]
+            port_bh_equity = port_strategies["Buy & Hold"]["equity"]
+
+            st.markdown("---")
+            st.subheader(f"Stratégies appliquées au portefeuille : {port_strategy_name}")
+
+            fig_port_strat = go.Figure()
+
+            fig_port_strat.add_trace(
+                go.Scatter(
+                    x=price_portfolio.index,
+                    y=price_portfolio.values,
+                    mode="lines",
+                    name="Prix Portefeuille (Base 100)",
+                    yaxis="y1",
+                    line=dict(color="#00c3ff"),
+                )
+            )
+
+            fig_port_strat.add_trace(
+                go.Scatter(
+                    x=port_strat_equity.index,
+                    y=port_strat_equity.values,
+                    mode="lines",
+                    name="Equity stratégie Portefeuille",
+                    yaxis="y2",
+                    line=dict(color="#ff9900"),
+                )
+            )
+
+            fig_port_strat.update_layout(
+                template="plotly_dark",
+                margin=dict(l=10, r=10, t=40, b=10),
+                xaxis=dict(domain=[0.0, 1.0]),
+                yaxis=dict(title="Prix portefeuille (Base 100)", side="left"),
+                yaxis2=dict(
+                    title="Equity stratégie (normalisée)",
+                    overlaying="y",
+                    side="right",
+                ),
+                legend=dict(orientation="h", y=-0.15),
+            )
+            st.plotly_chart(fig_port_strat, use_container_width=True)
+
+            st.subheader("Métriques de la stratégie sur le portefeuille")
+
+            port_metrics = compute_strategy_metrics(port_strat_returns, port_strat_equity)
+            port_bh_metrics = compute_strategy_metrics(
+                port_strategies["Buy & Hold"]["returns"], port_bh_equity
+            )
+
+            c1, c2, c3, c4 = st.columns(4)
+            with c1:
+                st.metric("Total return (strat port.)", f"{port_metrics['total_return']*100:.2f} %")
+            with c2:
+                st.metric("Max drawdown (strat port.)", f"{port_metrics['max_drawdown']*100:.2f} %")
+            with c3:
+                st.metric("Sharpe (strat port.)", f"{port_metrics['sharpe']:.2f}")
+            with c4:
+                st.metric("Vol annualisée (strat port.)", f"{port_metrics['vol']*100:.2f} %")
+
+            c5, c6, c7 = st.columns(3)
+            with c5:
+                st.metric("Total return (BH port.)", f"{port_bh_metrics['total_return']*100:.2f} %")
+            with c6:
+                st.metric("Max drawdown (BH port.)", f"{port_bh_metrics['max_drawdown']*100:.2f} %")
+            with c7:
+                st.metric("Sharpe (BH port.)", f"{port_bh_metrics['sharpe']:.2f}")
+
+            st.subheader("Distribution des rendements de la stratégie (Portefeuille)")
+            fig_port_hist = go.Figure(
+                data=[
+                    go.Histogram(
+                        x=port_strat_returns.values,
+                        nbinsx=50,
+                        marker_color="#ff9900",
+                    )
+                ]
+            )
+            fig_port_hist.update_layout(
+                template="plotly_dark",
+                xaxis_title="Rendement",
+                yaxis_title="Fréquence",
+                margin=dict(l=10, r=10, t=30, b=10),
+            )
+            st.plotly_chart(fig_port_hist, use_container_width=True)
 
 
