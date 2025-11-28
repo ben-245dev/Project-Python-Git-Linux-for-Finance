@@ -17,3 +17,41 @@ from portfolio import page_portfolio  # portfolio.py*
 from home import page_home  # home.py
 from chart import price_chart
 from data import get_price_series
+
+# -----------------------------
+# Config générale
+# -----------------------------
+st.set_page_config(
+    page_title="Trading Dashboard",
+    layout="wide",
+)
+
+# -----------------------------
+# Constantes communes
+# -----------------------------
+INDICES = {
+    "S&P 500": "^GSPC",
+    "DAX": "^GDAXI",
+    "CAC 40": "^FCHI",
+    "Nikkei 225": "^N225",
+    "FTSE 100": "^FTSE",
+    "Dow Jones": "^DJI",
+}
+
+TIMEZONES = {
+    "New York": "America/New_York",
+    "Londres": "Europe/London",
+    "Paris": "Europe/Paris",
+    "Tokyo": "Asia/Tokyo",
+}
+
+TRADING_TIMEZONES = {
+    "New York": "America/New_York",
+    "London": "Europe/London",
+    "Paris": "Europe/Paris",
+    "Tokyo": "Asia/Tokyo",
+    "Sydney": "Australia/Sydney",
+}
+
+
+
