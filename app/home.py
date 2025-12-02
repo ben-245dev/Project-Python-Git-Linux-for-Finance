@@ -53,7 +53,7 @@ def page_home():
 
     ticker_used = st.session_state.home_last_ticker
     period_used = st.session_state.home_last_period
-
+    
     st.write(f"Backtest en cours sur: {ticker_used} / {period_used}")
 
     chart_type = st.sidebar.selectbox("Type de graphique", ["Bougies", "Courbes"], key="home_chart_type")
@@ -116,3 +116,5 @@ def page_home():
         st.plotly_chart(fig, use_container_width=True)
 
         st.markdown(f"**VaR historique {quantile*100:.1f}%** : {var_value*100:.2f} %")
+        st.subheader(f"Exporter l’historique de {ticker}")
+        render_export_button(df, filename=f"historique_{ticker}.csv")
