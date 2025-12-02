@@ -15,7 +15,7 @@ from statsmodels.tsa.stattools import adfuller
 from data import get_price_series, load_ticker_data
 from metrics import compute_strategy_metrics
 from forecast import arima_forecast
-
+from export import render_export_button
 
 def build_strategies(close: pd.Series, params: dict):
     prices = close
@@ -227,6 +227,14 @@ def page_strategy():
         margin=dict(l=10, r=10, t=30, b=10),
     )
     st.plotly_chart(fig_hist, use_container_width=True)
+
+    # Export de l'équity de la stratégie
+    strat_equity_df = strat_equity.rename("Equity").to_frame()
+    render_export_button(strat_equity_df, filename=f"equity_{strategy_name}_{ticker}.csv", label="Télécharger equity stratégie")
+    
+    # Export des rendements
+    strat_returns_df = strat_returns.rename("Returns").to_frame()
+    render_export_button(strat_returns_df, filename=f"returns_{strategy_name}_{ticker}.csv", label="Télécharger rendements stratégie")
 
     st.subheader("Prévision (ARIMA)")
     forecast_df = arima_forecast(close, horizon=horizon_forecast)
