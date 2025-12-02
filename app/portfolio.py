@@ -14,7 +14,6 @@ from statsmodels.tsa.arima.model import ARIMA
 from statsmodels.tsa.stattools import adfuller
 from strategy import build_strategies
 from metrics import compute_strategy_metrics
-from export import render_export_button
 def page_portfolio():
     st.title("📊 Module B : Analyse de Portefeuille Multi-Actifs")
     st.markdown("---")
@@ -98,8 +97,7 @@ def page_portfolio():
         )
         / 100
     )
-    st.subheader(f"Exporter l’historique de {ticker}")
-    render_export_button(df, filename=f"historique_{ticker}.csv")
+    
 
     # Paramètres de stratégies sur la page (corps)
     st.markdown("---")
@@ -363,6 +361,7 @@ def page_portfolio():
             )
 
             st.plotly_chart(fig_port_hist, use_container_width=True)
+
 
 
 
