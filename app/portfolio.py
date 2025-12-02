@@ -279,6 +279,87 @@ def page_portfolio():
 
             st.markdown("---")
             st.subheader(f"Stratégies appliquées au portefeuille : {port_strategy_name}")
+                        port_params = {
+                "mom_lookback": port_mom_lb,
+                "fast_ma": port_fast_ma,
+                "slow_ma": port_slow_ma,
+                "breakout_lookback": port_breakout_lb,
+            }
+
+            port_strategies = build_strategies(price_portfolio, port_params)
+
+            # --- Graphique : toutes les stratégies sur une même figure ---
+            st.subheader("Équity de toutes les stratégies sur le portefeuille")
+
+            fig_all_strats = go.Figure()
+
+            for name, strat_dict in port_strategies.items():
+                equity_curve = strat_dict["equity"]
+                fig_all_strats.add_trace(
+                    go.Scatter(
+                        x=equity_curve.index,
+                        y=equity_curve.values,
+                        mode="lines",
+                        name=name,
+                    )
+                )
+
+            fig_all_strats.update_layout(
+                template="plotly_dark",
+                margin=dict(l=10, r=10, t=40, b=10),
+                xaxis_title="Date",
+                yaxis_title="Equity (normalisée)",
+                legend=dict(orientation="h", y=-0.2),
+            )
+
+            st.plotly_chart(fig_all_strats, use_container_width=True)
+
+            # --- Graphique détaillé de la stratégie sélectionnée (comme avant) ---
+            port_strat = port_strategies[port_strategy_name]
+            port_strat_returns = port_strat["returns"]
+            port_strat_equity = port_strat["equity"]
+            port_bh_equity = port_strategies["Buy & Hold"]["equity"]
+
+            st.markdown("---")
+            st.subheader(f"Stratégie sélectionnée sur le portefeuille : {port_strategy_name}")
+
+            fig_port_strat = go.Figure()
+
+            fig_port_strat.add_trace(
+                go.Scatter(
+                    x=price_portfolio.index,
+                    y=price_portfolio.values,
+                    mode="lines",
+                    name="Prix Portefeuille (Base 100)",
+                    yaxis="y1",
+                    line=dict(color="#00c3ff"),
+                )
+            )
+
+            fig_port_strat.add_trace(
+                go.Scatter(
+                    x=port_strat_equity.index,
+                    y=port_strat_equity.values,
+                    mode="lines",
+                    name="Equity stratégie Portefeuille",
+                    yaxis="y2",
+                    line=dict(color="#ff9900"),
+                )
+            )
+
+            fig_port_strat.update_layout(
+                template="plotly_dark",
+                margin=dict(l=10, r=10, t=40, b=10),
+                xaxis=dict(domain=[0.0, 1.0]),
+                yaxis=dict(title="Prix portefeuille (Base 100)", side="left"),
+                yaxis2=dict(
+                    title="Equity stratégie (normalisée)",
+                    overlaying="y",
+                    side="right",
+                ),
+                legend=dict(orientation="h", y=-0.15),
+            )
+            st.plotly_chart(fig_port_strat, use_container_width=True)
 
             fig_port_strat = go.Figure()
 
@@ -361,6 +442,7 @@ def page_portfolio():
             )
 
             st.plotly_chart(fig_port_hist, use_container_width=True)
+
 
 
 
