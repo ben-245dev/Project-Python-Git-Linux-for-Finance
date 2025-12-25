@@ -88,3 +88,7 @@ def send_email():
         print("✅ Email envoyé !")
     except Exception as e:
         print(f"❌ Erreur SMTP : {e}")
+
+
+if __name__ == "__main__":
+    send_email()
