@@ -33,6 +33,15 @@ def main():
         current_email = get_user_setting("user_email") or ""
         email_input = st.text_input("Votre Email pour recevoir le rapport :", value=current_email)
 
+        if st.button("Sauvegarder Email"):
+            # Vérification basique du format de l'email
+            if "@" in email_input and "." in email_input:
+                save_user_setting("user_email", email_input)
+                st.success("Email enregistré !")
+            else:
+                st.error("Format invalide.")
+
+    
     st.sidebar.markdown("---")
     
     
