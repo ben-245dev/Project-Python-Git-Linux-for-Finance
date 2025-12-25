@@ -27,8 +27,14 @@ def main():
     # Indicateur de dernière mise à jour
     import datetime
     st.sidebar.caption(f"Dernière MAJ: {datetime.datetime.now().strftime('%H:%M:%S')}")
-    
+
+    # --- CONFIGURATION EMAIL UTILISATEUR ---
+    with st.sidebar.expander("📧 Configurer les Alertes"):
+        current_email = get_user_setting("user_email") or ""
+        email_input = st.text_input("Votre Email pour recevoir le rapport :", value=current_email)
+
     st.sidebar.markdown("---")
+    
     
     page = st.sidebar.radio(
         "Navigation",
