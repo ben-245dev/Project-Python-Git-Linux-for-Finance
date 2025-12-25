@@ -1,7 +1,9 @@
 import streamlit as st
 from streamlit_autorefresh import st_autorefresh
+import datetime
+# Import des nouvelles fonctions de settings
+from backend.orders import save_user_setting, get_user_setting
 
-# Configuration globale DOIT être la toute première ligne
 st.set_page_config(
     page_title="Quantitative Trading Pro",
     page_icon="📈",
