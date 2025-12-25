@@ -46,5 +46,11 @@ def get_market_data(positions_df):
                 total_day_pnl += (last - prev) * qty
                 total_value += last * qty
         except: pass
+
+def generate_html_body(df, total_value, total_day_pnl):
+    color = "green" if total_day_pnl >= 0 else "red"
+    html = f"<h2>Rapport : {total_value:.2f}$ (<span style='color:{color}'>{total_day_pnl:+.2f}$</span>)</h2>"
+    # Note: On pourra enrichir le tableau HTML plus tard
+    return html
         
     return positions_df, total_value, total_day_pnl
