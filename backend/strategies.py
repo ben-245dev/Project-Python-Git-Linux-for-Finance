@@ -3,11 +3,11 @@ import pandas_ta as ta
 import numpy as np
 
 def build_strategies(close: pd.Series, params: dict):
-    # Conversion Series -> DataFrame pour pandas-ta
+    # Series to DataFrame for indicator calculations
     df = close.to_frame(name="Close")
     
-    # --- Récupération des Paramètres (avec valeurs par défaut) ---
-    # Moyennes Mobiles
+    # --- Parameters 
+    # Moving Averages
     fast_ma_len = params.get("fast_ma", 20)
     slow_ma_len = params.get("slow_ma", 50)
     
@@ -28,14 +28,13 @@ def build_strategies(close: pd.Series, params: dict):
     # Adaptive
     target_vol = params.get("target_vol", 0.02)
 
-    # --- Calcul des Indicateurs ---
+    # --- Indicator Calculations ---
     
     # 1. EMA
     df.ta.ema(length=fast_ma_len, append=True, col_names=("EMA_Fast",))
     df.ta.ema(length=slow_ma_len, append=True, col_names=("EMA_Slow",))
     
     # 2. RSI
-    # Note : pandas_ta nomme souvent la colonne RSI_14, on force le nom pour être sûr
     rsi_series = df.ta.rsi(length=rsi_len)
     if rsi_series is not None:
         df["RSI"] = rsi_series
@@ -119,7 +118,7 @@ def build_strategies(close: pd.Series, params: dict):
         
         signal_bb = pd.Series(np.nan, index=df.index)
         
-        # Conditions paramétrables implicitement via EMA_Slow et BB settings
+        # Parametrizable conditions
         buy_condition = (close_price > bb_upper_series) & (close_price > ema_slow_series)
         sell_condition = (close_price < bb_mid_series)
         

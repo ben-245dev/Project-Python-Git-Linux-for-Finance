@@ -2,8 +2,7 @@ import pandas_ta as ta
 import pandas as pd
 
 def add_technical_indicators(df: pd.DataFrame):
-    """Ajoute RSI, MACD et Bollinger Bands au DataFrame"""
-    # Copie pour éviter les warnings SettingWithCopy
+    """Add RSI, MACD and Bollinger Bands to the DataFrame"""
     data = df.copy()
     
     # RSI

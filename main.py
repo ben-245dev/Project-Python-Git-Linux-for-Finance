@@ -1,17 +1,16 @@
 import streamlit as st
 from streamlit_autorefresh import st_autorefresh
 import datetime
-# Import des nouvelles fonctions de settings
 from backend.orders import save_user_setting, get_user_setting
 
 st.set_page_config(
-    page_title="Quantitative Trading Pro",
+    page_title="Quantitative Trading Dashboard",
     page_icon="📈",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# --- NOUVEAU : Auto-refresh toutes les 5 minutes (300 000 ms) ---
+# --- Auto-refresh every 5 minutes (300 000 ms) ---
 count = st_autorefresh(interval=5 * 60 * 1000, key="data_refresh")
 
 from frontend.views.home import page_home
@@ -24,22 +23,21 @@ def main():
     st.sidebar.image("https://cdn-icons-png.flaticon.com/512/7214/7214197.png", width=50)
     st.sidebar.title("QuantApp Pro")
     
-    # Indicateur de dernière mise à jour
+    # Last update time
     import datetime
-    st.sidebar.caption(f"Dernière MAJ: {datetime.datetime.now().strftime('%H:%M:%S')}")
+    st.sidebar.caption(f"Last MAJ: {datetime.datetime.now().strftime('%H:%M:%S')}")
 
-    # --- CONFIGURATION EMAIL UTILISATEUR ---
-    with st.sidebar.expander("📧 Configurer les Alertes"):
+    # --- CONFIG USER EMAIL ---
+    with st.sidebar.expander("📧 Configure Alerts"):
         current_email = get_user_setting("user_email") or ""
-        email_input = st.text_input("Votre Email pour recevoir le rapport :", value=current_email)
+        email_input = st.text_input("Your Email to receive the report:", value=current_email)
 
-        if st.button("Sauvegarder Email"):
-            # Vérification basique du format de l'email
+        if st.button("Save Email"):
             if "@" in email_input and "." in email_input:
                 save_user_setting("user_email", email_input)
-                st.success("Email enregistré !")
+                st.success("Email saved!")
             else:
-                st.error("Format invalide.")
+                st.error("Invalid format.")
 
     
     st.sidebar.markdown("---")
@@ -48,10 +46,10 @@ def main():
     page = st.sidebar.radio(
         "Navigation",
         [
-            "🏠 Dashboard Marché", 
+            "🏠 Market Dashboard", 
             "🎮 Paper Trading",
-            "🧪 Stratégies & Backtest", 
-            "🧠 Optimisation Portefeuille",
+            "🧪 Backtest & Strategy", 
+            "🧠 Portfolio Optimization",
             "⚡ Quant Lab"
         ]
     )
@@ -62,9 +60,9 @@ def main():
         page_home()
     elif "Paper Trading" in page:
         page_paper_trading()
-    elif "Stratégies" in page:
+    elif "Strategy" in page:
         page_strategy()
-    elif "Optimisation" in page:
+    elif "Portfolio Optimization" in page:
         page_portfolio()
     elif "Quant Lab" in page:
         page_quant_lab()

@@ -50,19 +50,18 @@ def get_price_series(df: pd.DataFrame, field: str, ticker: str) -> pd.Series:
     if df.empty:
         return pd.Series()
 
-    # Cas 1 : MultiIndex (plusieurs colonnes par ticker)
+    # Case 1 : MultiIndex
     if isinstance(df.columns, pd.MultiIndex):
         if (field, ticker) in df.columns:
             return df[(field, ticker)]
         if field in df.columns.get_level_values(0):
-            # Parfois yfinance retourne juste le champ si un seul ticker a été demandé mais formaté bizarrement
             return df[field]
     
-    # Cas 2 : Index simple (un seul ticker téléchargé avec multi_level_index=False)
+    # Cas 2 : simple index
     else:
         if field in df.columns:
             return df[field]
-        # Fallback : si on demande "Close" mais qu'on a juste une série
+        # Fallback
         if field == "Close" and len(df.columns) == 1:
             return df.iloc[:, 0]
 

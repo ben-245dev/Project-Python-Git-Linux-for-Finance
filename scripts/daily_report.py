@@ -5,11 +5,11 @@ import pandas as pd
 import yfinance as yf
 import numpy as np
 
-# Configuration : Liste des actifs à surveiller dans le rapport
+
 ASSETS = ["BTC-USD", "ETH-USD", "AAPL", "MSFT", "EURUSD=X"]
 REPORT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "reports")
 
-# Assurer que le dossier de rapport existe
+# Assure that the report directory exists
 os.makedirs(REPORT_DIR, exist_ok=True)
 
 def compute_drawdown(series):
@@ -30,19 +30,19 @@ def generate_daily_report():
         
         for ticker in ASSETS:
             try:
-                # Téléchargement des données (2 jours pour avoir open/close fiable)
-                # 'auto_adjust=True' pour des prix propres
+                # download daily data for the last 2 days to ensure we have the latest complete data
+                # 'auto_adjust=True' for clean prices
                 df = yf.download(ticker, period="2d", interval="1d", progress=False, auto_adjust=True)
                 
                 if df.empty:
-                    f.write(f"[{ticker}] : Pas de données disponibles.\n")
+                    f.write(f"[{ticker}] : No data available.\n")
                     continue
                 
-                # Récupération de la dernière journée complète
+                # Retrieve the last complete day
                 last_candle = df.iloc[-1]
                 
-                # Si c'est un actif crypto (24/7), le 'Close' est le prix actuel
-                # Si c'est une action, c'est le close d'hier ou d'aujourd'hui
+                # If it's a crypto asset (24/7), the 'Close' is the current price
+                # If it's a stock, it's the close of yesterday or today
                 
                 open_price = float(last_candle["Open"])
                 close_price = float(last_candle["Close"])
@@ -53,7 +53,7 @@ def generate_daily_report():
                 change = close_price - open_price
                 change_pct = (change / open_price) * 100
                 
-                # Volatilité (Range Journalier)
+                # Volatility (Range Journalier)
                 volatility_day = ((high_price - low_price) / open_price) * 100
                 
                 # Max Drawdown Intraday (Approximation : Low vs Open)
@@ -61,19 +61,18 @@ def generate_daily_report():
                 # ici on fait simple : (Low - High) / High
                 dd_intraday = ((low_price - high_price) / high_price) * 100
 
-                f.write(f"ACTIF : {ticker}\n")
+                f.write(f"ASSET : {ticker}\n")
                 f.write(f"---------------------------\n")
                 f.write(f"  Open:    {open_price:.2f}\n")
                 f.write(f"  Close:   {close_price:.2f}\n")
                 f.write(f"  Perf:    {change_pct:+.2f}%\n")
-                f.write(f"  Volatilité (High-Low): {volatility_day:.2f}%\n")
-                f.write(f"  Max Drawdown (Jour):   {dd_intraday:.2f}%\n")
+                f.write(f"  Volatility (High-Low): {volatility_day:.2f}%\n")
+                f.write(f"  Max Drawdown (Day):   {dd_intraday:.2f}%\n")
                 f.write("\n")
                 
             except Exception as e:
-                f.write(f"[{ticker}] : Erreur lors de l'analyse ({str(e)})\n")
-
-    print(f"Rapport sauvegardé : {filename}")
+                f.write(f"[{ticker}] : Error during analysis ({str(e)})\n")
+    print(f"Report saved : {filename}")
 
 if __name__ == "__main__":
     generate_daily_report()

@@ -5,15 +5,14 @@ from pypfopt import expected_returns
 
 def optimize_portfolio_weights(prices: pd.DataFrame, objective="sharpe", min_weight=0.0, max_weight=1.0):
     """
-    Calcule les poids optimaux avec contraintes.
-    weight_bounds = (min, max) pour chaque actif.
+    Optimal weights for a portfolio using Modern Portfolio Theory.
+    objective: "sharpe" to maximize Sharpe Ratio, "min_vol" to minimize volatility.
     """
-    # 1. Calcul des stats
+    # 1. Stats calculus
     mu = expected_returns.mean_historical_return(prices)
     S = risk_models.sample_cov(prices)
 
-    # 2. Frontière Efficiente AVEC CONTRAINTES
-    # Par défaut (0, 1) signifie "Pas de short, pas de levier > 100%"
+    # 2. Efficient Frontier
     ef = EfficientFrontier(mu, S, weight_bounds=(min_weight, max_weight))
     
     try:

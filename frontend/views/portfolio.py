@@ -69,26 +69,26 @@ def page_portfolio():
             df_w = pd.DataFrame({"Actif": w.keys(), "Poids": w.values()})
             df_w = df_w[df_w["Poids"] > 0.001]
             
-            fig = px.pie(df_w, values="Poids", names="Actif", title="Allocation Optimale", hole=0.4)
+            fig = px.pie(df_w, values="Poids", names="Actif", title="Optimal Allocation", hole=0.4)
             st.plotly_chart(fig, width='stretch')
             
-            # Métriques Optimiseur
+            # Optimizer Metrics
             c1, c2, c3 = st.columns(3)
-            c1.metric("Rendement Attendu", f"{p[0]:.2%}")
-            c2.metric("Volatilité", f"{p[1]:.2%}")
-            c3.metric("Ratio de Sharpe", f"{p[2]:.2f}")
+            c1.metric("Expected returns", f"{p[0]:.2%}")
+            c2.metric("Volatility", f"{p[1]:.2%}")
+            c3.metric("Sharpe Ratio", f"{p[2]:.2f}")
 
     st.markdown("---")
 
-    # --- 3. Analyse Détaillée (Métriques & Corrélations) ---
-    st.markdown("### 📊 Analyse Approfondie du Portefeuille")
+    # --- 3. Detailed Analysis (Metrics & Correlations) ---
+    st.markdown("### 📊 In-depth Portfolio Analysis")
 
-    # Si pas optimisé, on utilise l'équipondéré
+    # If not optimized, use equal weighting
     if 'opt_weights' in st.session_state:
         final_weights = np.array([st.session_state['opt_weights'].get(t, 0) for t in prices.columns])
     else:
         final_weights = np.array([1/len(tickers)] * len(tickers))
-        st.info("Affichage basé sur un portefeuille Équipondéré (lancez l'optimisation pour voir la différence).")
+        st.info("Equiponderated portfolio.")
 
     # Création indice synthétique
     port_ret = returns.dot(final_weights)
@@ -106,23 +106,23 @@ def page_portfolio():
     col_m5.metric("Kurtosis", f"{m['kurtosis']:.2f}", help="Queue de distribution : > 3 signifie événements extrêmes fréquents.")
 
     # --- B. Corrélations ---
-    st.subheader("🔗 Corrélations")
+    st.subheader("🔗 Correlations")
     
-    tab_corr1, tab_corr2 = st.tabs(["Matrice (Heatmap)", "Dynamique (Rolling)"])
+    tab_corr1, tab_corr2 = st.tabs(["Matrix (Heatmap)", "Dynamic (Rolling)"])
     
     with tab_corr1:
         corr_matrix = returns.corr()
-        fig_corr = px.imshow(corr_matrix, text_auto=".2f", aspect="auto", color_continuous_scale="RdBu_r", title="Matrice de Corrélation Statique")
+        fig_corr = px.imshow(corr_matrix, text_auto=".2f", aspect="auto", color_continuous_scale="RdBu_r", title="Static Correlation Matrix")
         st.plotly_chart(fig_corr, width='stretch')
 
     with tab_corr2:
-        st.caption("Visualisez comment la corrélation entre deux actifs évolue dans le temps.")
+        st.caption("How correlations between two assets evolve over time.")
         c_a, c_b, c_w = st.columns([1, 1, 2])
-        asset_a = c_a.selectbox("Actif A", prices.columns, index=0)
-        # Sélection par défaut du 2ème actif s'il existe
+        asset_a = c_a.selectbox("Asset A", prices.columns, index=0)
+        # Default selection of the 2nd asset if it exists
         idx_b = 1 if len(prices.columns) > 1 else 0
         asset_b = c_b.selectbox("Actif B", prices.columns, index=idx_b)
-        window = c_w.slider("Fenêtre glissante (jours)", 30, 365, 90)
+        window = c_w.slider("sliding window (days)", 30, 365, 90)
 
         if asset_a != asset_b:
             # Calcul Rolling Correlation
@@ -137,36 +137,36 @@ def page_portfolio():
             fig_roll.add_hline(y=-1, line_dash="dot", line_color="gray", opacity=0.3)
             
             fig_roll.update_layout(
-                title=f"Corrélation Glissante ({window} jours) : {asset_a} vs {asset_b}",
-                yaxis_title="Corrélation (-1 à +1)",
+                title=f"Correlation ({window} days) : {asset_a} vs {asset_b}",
+                yaxis_title="Correlation (-1 to +1)",
                 template="plotly_dark",
                 height=400
             )
             st.plotly_chart(fig_roll, width='stretch')
         else:
-            st.info("Sélectionnez deux actifs différents.")
+            st.info("Select two different assets.")
 
 # ... (Le début du fichier reste identique jusqu'à la section Monte Carlo) ...
 
     # --- 4. Module de Stress Test Avancé ---
-    st.markdown("### 🔮 Stress Test & Gestion des Risques")
+    st.markdown("### 🔮 Stress Test & Risk Management")
     
     # Onglets pour séparer les approches
-    tab_mc, tab_crash = st.tabs(["🎲 Simulation Monte Carlo (Futur Probable)", "💥 Crash Test (Scénarios Historiques)"])
+    tab_mc, tab_crash = st.tabs(["🎲 Simulation Monte Carlo (Futur Probable)", "💥 Crash Test (Historical Scenarios)"])
 
     # === TAB 1 : MONTE CARLO ===
     with tab_mc:
-        st.caption("Projection de 500 scénarios possibles sur 1 an, basée sur la volatilité actuelle.")
+        st.caption("Projection of 500 possible scenarios over 1 year, based on current volatility.")
         
         col_sim1, col_sim2 = st.columns([1, 3])
         
         with col_sim1:
-            sim_years = st.slider("Horizon (Années)", 1, 5, 1)
-            n_sims = 500 # Fixe pour la performance
+            sim_years = st.slider("Horizon (Years)", 1, 5, 1)
+            n_sims = 500 # Fixed for performance
             
-            if st.button("🚀 Lancer Simulation"):
-                with st.spinner("Calcul des trajectoires..."):
-                    # On utilise l'indice synthétique calculé plus haut
+            if st.button("🚀 Start Simulation"):
+                with st.spinner("Calculating trajectories..."):
+                    # We use the synthetic index calculated above
                     current_capital = port_cum.iloc[-1] * amount
                     
                     # Simulation sur les rendements
@@ -182,8 +182,8 @@ def page_portfolio():
                 sim_df = st.session_state['mc_results']
                 start_cap = st.session_state['mc_capital']
                 
-                # --- GRAPHIQUE CÔNE D'INCERTITUDE ---
-                # Au lieu de 500 lignes, on affiche des zones de centiles (5%, 25%, 50%, 75%, 95%)
+                # --- GRAPHIQUE ---
+                # centiles (5%, 25%, 50%, 75%, 95%)
                 
                 # Calcul des centiles jour par jour
                 p05 = sim_df.quantile(0.05, axis=1)
@@ -214,13 +214,13 @@ def page_portfolio():
                 
                 # Médiane
                 fig_mc.add_trace(go.Scatter(
-                    x=sim_df.index, y=p50, mode='lines', line=dict(color='white', width=2), name='Scénario Médian'
+                    x=sim_df.index, y=p50, mode='lines', line=dict(color='white', width=2), name='Scenario Median'
                 ))
                 
                 fig_mc.update_layout(
                     template="plotly_dark", 
-                    title=f"Projection du Capital ({sim_years} ans)", 
-                    yaxis_title="Valeur (€)",
+                    title=f"Projection of capital ({sim_years} years)", 
+                    yaxis_title="Value (€)",
                     height=400,
                     hovermode="x unified"
                 )
@@ -233,22 +233,22 @@ def page_portfolio():
                 # Import local si besoin, ou assurez-vous de l'importer en haut du fichier
                 # from backend.simulation import compute_risk_metrics
                 
-                st.markdown("#### 📊 Analyse des Risques (Fin de période)")
+                st.markdown("#### 📊 Risk Analysis (End of Period)")
                 m1, m2, m3, m4 = st.columns(4)
                 
-                m1.metric("Gain Médian", f"{((p50.iloc[-1] - start_cap)/start_cap):+.2%}", f"{p50.iloc[-1]:,.0f} €")
+                m1.metric("Median Gain", f"{((p50.iloc[-1] - start_cap)/start_cap):+.2%}", f"{p50.iloc[-1]:,.0f} €")
                 
                 m2.metric(
-                    "VaR 95% (Mauvais cas)", 
+                    "VaR 95% (Worst case)", 
                     f"{metrics['VaR_95']:.2%}", 
                     f"Capital : {(start_cap * (1+metrics['VaR_95'])):,.0f} €",
                     delta_color="inverse"
                 )
                 
                 m3.metric(
-                    "CVaR 95% (Pire cas moyen)", 
+                    "CVaR 95% (Worst case average)", 
                     f"{metrics['CVaR_95']:.2%}",
-                    help="Si le marché s'effondre au-delà de la VaR, voici la perte moyenne attendue.",
+                    help="If the market crashes beyond the VaR, this is the average loss expected.",
                     delta_color="inverse"
                 )
                 
@@ -260,17 +260,17 @@ def page_portfolio():
 
     # === TAB 2 : CRASH TEST ===
     with tab_crash:
-        st.caption("Si une crise historique se reproduisait demain, comment votre portefeuille réagirait-il ?")
+        st.caption("If a historical crisis happened tomorrow, how would your portfolio react?")
         
-        # Import local de la fonction crash test
+        # Import local
         from backend.simulation import run_historical_crash_test
         
-        crash_scenario = st.selectbox("Choisir un scénario catastrophe", ["Subprimes (2008)", "Covid-19 (2020)", "Dotcom (2000)"])
+        crash_scenario = st.selectbox("Choose a scenario", ["Subprimes (2008)", "Covid-19 (2020)", "Dotcom (2000)"])
         
         current_capital = port_cum.iloc[-1] * amount
         crash_curve = run_historical_crash_test(current_capital, crash_scenario)
         
-        # Calcul de la perte max sur ce scénario
+        # max drawdown during crisis
         min_val = crash_curve.min()
         drawdown_crash = (min_val - current_capital) / current_capital
         
@@ -279,18 +279,18 @@ def page_portfolio():
         with c_crash1:
             fig_crash = go.Figure()
             fig_crash.add_trace(go.Scatter(
-                y=crash_curve, mode='lines', name='Votre Portefeuille', 
+                y=crash_curve, mode='lines', name='Your Portfolio', 
                 line=dict(color='#ff4b4b', width=3)
             ))
             fig_crash.add_annotation(
                 x=crash_curve.idxmin(), y=min_val,
-                text=f"Point Bas: {min_val:,.0f} €",
+                text=f"Down point: {min_val:,.0f} €",
                 showarrow=True, arrowhead=1
             )
-            fig_crash.update_layout(template="plotly_dark", title=f"Simulation : Impact {crash_scenario}", xaxis_title="Jours de crise")
+            fig_crash.update_layout(template="plotly_dark", title=f"Simulation : Impact {crash_scenario}", xaxis_title="Crisis day")
             st.plotly_chart(fig_crash, width='stretch')
             
         with c_crash2:
             st.error(f"Impact Max : {drawdown_crash:.2%}")
-            st.write(f"Votre capital tomberait temporairement à **{min_val:,.0f} €**.")
-            st.info("💡 Ce test suppose que vos actifs sont corrélés au marché global lors d'un krach.")
+            st.write(f"Votre capital would fall to **{min_val:,.0f} €**.")
+            st.info("💡 Supposing your assets are correlated with the overall market during a crash.")

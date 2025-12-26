@@ -9,24 +9,24 @@ import pandas as pd
 from scipy.stats import skew, kurtosis
 
 def compute_drawdown(equity: pd.Series):
-    """Calcule le drawdown historique."""
+    """historical drawdown"""
     running_max = equity.cummax()
     dd = equity / running_max - 1.0
     return dd, dd.min()
 
 def compute_sharpe(returns: pd.Series, periods_per_year: int = 252, rf: float = 0.0):
-    """Ratio de Sharpe (Rendement / Volatilité totale)."""
+    """Sharpe ratio"""
     if returns.std() == 0 or returns.empty:
         return np.nan
     excess = returns - rf / periods_per_year
     return np.sqrt(periods_per_year) * excess.mean() / excess.std()
 
 def compute_sortino(returns: pd.Series, periods_per_year: int = 252, rf: float = 0.0):
-    """Ratio de Sortino (Rendement / Volatilité Négative)."""
+    """Ratio Sortino """
     if returns.empty: return np.nan
     
     excess = returns - rf / periods_per_year
-    # On ne garde que les rendements négatifs pour le risque
+    # only negative returns
     downside_returns = excess[excess < 0]
     
     downside_std = downside_returns.std() * np.sqrt(periods_per_year)
@@ -43,7 +43,7 @@ def compute_strategy_metrics(strategy_returns: pd.Series, equity: pd.Series, rf:
     """Calcule un ensemble complet de métriques."""
     if strategy_returns.empty: return {}
 
-    # Rendements et Volatilité
+    # Returns and volatility
     days = len(strategy_returns)
     years = days / 252
     total_ret = equity.iloc[-1] - 1.0
@@ -51,7 +51,7 @@ def compute_strategy_metrics(strategy_returns: pd.Series, equity: pd.Series, rf:
     
     vol = strategy_returns.std() * np.sqrt(252)
     
-    # Risque
+    # Risk
     _, max_dd = compute_drawdown(equity)
     
     # Ratios
@@ -77,10 +77,10 @@ def compute_strategy_metrics(strategy_returns: pd.Series, equity: pd.Series, rf:
 
 def optimize_portfolio(prices: pd.DataFrame, objective="sharpe"):
     """
-    Calcule les poids optimaux pour un portefeuille donné.
-    objective: 'sharpe' (max Sharpe) ou 'min_vol' (min volatilité)
+    Optimal weights for a portfolio using Modern Portfolio Theory.
+    objective: "sharpe" to maximize Sharpe Ratio, "min_vol" to minimize volatility.
     """
-    # 1. Calculer les rendements attendus et la matrice de covariance
+    # 1. Stats calculus and covariance matrix
     mu = expected_returns.mean_historical_return(prices)
     S = risk_models.sample_cov(prices)
 
@@ -92,6 +92,6 @@ def optimize_portfolio(prices: pd.DataFrame, objective="sharpe"):
     elif objective == "min_vol":
         ef.min_volatility()
     
-    # 3. Nettoyage des poids (arrondis)
+    # 3.  Weights cleanup
     cleaned_weights = ef.clean_weights()
     return cleaned_weights, ef.portfolio_performance(verbose=False)

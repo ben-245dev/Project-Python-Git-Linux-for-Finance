@@ -27,27 +27,21 @@ def init_db():
 
 def is_market_open(ticker):
     """
-    Vérifie si le marché est ouvert pour un ticker donné.
-    - Crypto (contient '-USD') : Toujours ouvert (24/7).
-    - Actions US : Ouvert lun-ven de 09h30 à 16h00 (Heure New York).
+   Check if the market is open for the given ticker.
+   Returns (True, "") if open, else (False, "Reason").
     """
     ticker = ticker.upper()
     
-    # 1. Cas Crypto : Toujours ouvert
     if "-USD" in ticker:
         return True, ""
 
-    # 2. Cas Actions US (Par défaut pour simplifier)
-    # On se base sur le fuseau horaire de New York
     try:
         ny_tz = pytz.timezone('America/New_York')
         now_ny = datetime.now(ny_tz)
         
-        # Vérification Week-end (Lundi=0, ..., Samedi=5, Dimanche=6)
         if now_ny.weekday() >= 5:
             return False, "Le marché (US) est fermé le week-end."
 
-        # Vérification Horaires (09:30 - 16:00 NY)
         market_open = time(9, 30)
         market_close = time(16, 0)
         current_time = now_ny.time()
@@ -56,26 +50,24 @@ def is_market_open(ticker):
             return False, f"Le marché (US) est fermé. Heure NY : {current_time.strftime('%H:%M')} (Ouverture : 09:30-16:00)."
             
     except Exception as e:
-        # En cas d'erreur de timezone, on laisse passer (fail-open) ou on bloque, au choix.
-        # Ici on log juste l'erreur
         print(f"Erreur timezone: {e}")
 
     return True, ""
 
 def place_order(ticker, action, quantity, price):
-    """Enregistre un ordre UNIQUEMENT si le marché est ouvert."""
+    """Save an order in the database after checking market status."""
     
-    # 1. Vérification d'ouverture du marché
+    # 1. Check if the market is open
     open_status, msg = is_market_open(ticker)
     if not open_status:
-        return False, msg  # On retourne False et le message d'erreur explicatif
-    
-    # 2. Enregistrement en base
+        return False, msg  # Return False and the explanatory error message
+
+    # 2. Save in database
     try:
         conn = sqlite3.connect(DB_FILE)
         c = conn.cursor()
         date_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        fees = quantity * price * 0.001  # Simulation de frais (0.1%)
+        fees = quantity * price * 0.001  # Simulation of fees (0.1%)
         
         c.execute(
             "INSERT INTO orders (date, ticker, action, quantity, price, fees) VALUES (?, ?, ?, ?, ?, ?)",
@@ -83,12 +75,12 @@ def place_order(ticker, action, quantity, price):
         )
         conn.commit()
         conn.close()
-        return True, "Ordre exécuté avec succès."
+        return True, "Orders executed successfully."
     except Exception as e:
-        return False, f"Erreur base de données : {e}"
+        return False, f"Database error: {e}"
 
 def get_transaction_history():
-    """Récupère tout l'historique des transactions."""
+    """Get history of all transactions."""
     conn = sqlite3.connect(DB_FILE)
     try:
         df = pd.read_sql_query("SELECT * FROM orders ORDER BY date DESC", conn)
@@ -99,7 +91,8 @@ def get_transaction_history():
 
 def get_portfolio_positions():
     """
-    Calcule les positions actuelles (Quantité nette et Prix moyen pondéré).
+    Actual portfolio positions based on transaction history.
+    Calculates average price (PRU) and total invested amount.
     """
     df = get_transaction_history()
     if df.empty:
@@ -121,22 +114,21 @@ def get_portfolio_positions():
             positions[tick]["total_cost"] += (qty * price)
         elif action == "VENTE":
             positions[tick]["quantity"] -= qty
-            # Mise à jour du coût total proportionnellement
             if positions[tick]["quantity"] > 0:
                 positions[tick]["total_cost"] = positions[tick]["quantity"] * positions[tick]["avg_price"]
             else:
                 positions[tick]["total_cost"] = 0
 
-        # Recalcul du PRU (Prix de Revient Unitaire)
+        # PRU
         if positions[tick]["quantity"] > 0:
             positions[tick]["avg_price"] = positions[tick]["total_cost"] / positions[tick]["quantity"]
         else:
             positions[tick]["avg_price"] = 0
 
-    # Conversion en DataFrame
+   
     pos_list = []
     for tick, data in positions.items():
-        if data["quantity"] > 0.0001:  # On ne garde que les positions ouvertes
+        if data["quantity"] > 0.0001:  # Keeping only positive positions
             pos_list.append({
                 "Ticker": tick,
                 "Quantité": data["quantity"],
@@ -148,23 +140,22 @@ def get_portfolio_positions():
 
 def get_current_prices(tickers_list):
     """
-    Récupère les prix actuels de manière robuste.
-    Gère le mélange Crypto (24/7) et Actions (Fermé le week-end).
+    Get actual prices 
+    Handles the mix of Crypto (24/7) and Stocks (closed on weekends).
     """
     if not tickers_list:
         return {}
     try:
-        # On demande 5 jours pour être sûr d'avoir la dernière clôture (cas du week-end)
         data = yf.download(tickers_list, period="5d", interval="15m", progress=False)["Close"]
         
         if data.empty: return {}
         
-        # Cas 1 : Un seul ticker (Series)
+        # one ticker
         if isinstance(data, pd.Series):
             return {tickers_list[0]: float(data.dropna().iloc[-1])}
         
-        # Cas 2 : Plusieurs tickers (DataFrame)
-        # ffill() remplit les trous (le prix du vendredi est propagé au samedi/dimanche)
+        # Cas 2 : several tickers (DataFrame)
+        # ffill() fill the holes (weekends for stocks)
         last_prices = data.ffill().iloc[-1]
         
         return last_prices.to_dict()
@@ -173,7 +164,7 @@ def get_current_prices(tickers_list):
         return {}
 
 def init_settings_db():
-    """Crée une table pour stocker les préférences utilisateur (email)."""
+    """Create a table to store user preferences (email)."""
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
     c.execute('''
@@ -186,8 +177,8 @@ def init_settings_db():
     conn.close()
 
 def save_user_setting(key, value):
-    """Sauvegarde une configuration (ex: 'user_email')."""
-    init_settings_db() # Sécurité
+    """Save a user setting."""
+    init_settings_db() # Security
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
     c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", (key, value))
@@ -195,7 +186,7 @@ def save_user_setting(key, value):
     conn.close()
 
 def get_user_setting(key):
-    """Récupère une configuration."""
+    """Get a user setting."""
     init_settings_db()
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()

@@ -11,12 +11,10 @@ def run_monte_carlo(prices: pd.Series, days=252, simulations=1000):
     
     mu = returns.mean()
     sigma = returns.std()
-    
-    # Génération vectorisée pour la performance (beaucoup plus rapide que des boucles)
-    # On simule 'simulations' colonnes sur 'days' lignes
+
     daily_shocks = np.random.normal(mu, sigma, (days, simulations))
     
-    # On calcule les prix cumulés
+    # Cumulate price paths
     price_paths = np.zeros((days, simulations))
     price_paths[0] = last_price
     
@@ -31,17 +29,14 @@ def run_historical_crash_test(current_value, crash_name="2008"):
     Simule l'impact d'un krach historique sur le portefeuille actuel.
     Retourne la courbe d'évolution fictive.
     """
-    # Données simplifiées des krachs majeurs (S&P 500 approximatif)
+    # Major crisis scenarios (daily returns)
     scenarios = {
-        "Subprimes (2008)": [-0.01, -0.02, -0.05, 0.01, -0.04, -0.07, -0.02, -0.09, -0.03, 0.02, -0.05, -0.06], # Séquence violente
-        "Covid-19 (2020)": [-0.03, -0.04, 0.01, -0.12, -0.09, 0.05, -0.05, -0.02, 0.06, 0.09], # Chute brutale puis remontée
-        "Dotcom (2000)": [-0.01]*20 + [-0.03]*10 + [0.01]*5 + [-0.02]*10 # Chute lente et douloureuse
+        "Subprimes (2008)": [-0.01, -0.02, -0.05, 0.01, -0.04, -0.07, -0.02, -0.09, -0.03, 0.02, -0.05, -0.06], # violent and prolonged
+        "Covid-19 (2020)": [-0.03, -0.04, 0.01, -0.12, -0.09, 0.05, -0.05, -0.02, 0.06, 0.09], # Brutal but short
+        "Dotcom (2000)": [-0.01]*20 + [-0.03]*10 + [0.01]*5 + [-0.02]*10 # low crash
     }
     
     scenario_rets = scenarios.get(crash_name, [-0.01]*10)
-    
-    # On étend la séquence pour la rendre plus longue si besoin (boucle)
-    # Pour un test simple, on applique juste la séquence de chocs
     prices = [current_value]
     for ret in scenario_rets:
         prices.append(prices[-1] * (1 + ret))
@@ -54,16 +49,16 @@ def compute_risk_metrics(final_values: pd.Series, initial_value: float):
     """
     returns = (final_values - initial_value) / initial_value
     
-    # VaR 95% (Le seuil des 5% pires scénarios)
+    # VaR 95% 
     var_95 = np.percentile(returns, 5)
     
-    # CVaR 95% (Moyenne des pertes SI on dépasse la VaR - "Expected Shortfall")
+    # CVaR 95% (Average loss beyond the VaR - "Expected Shortfall")
     cvar_95 = returns[returns <= var_95].mean()
     
-    # Probabilité de perdre plus de 20%
+    # Probability of losing more than 20%
     prob_loss_20 = (returns < -0.20).mean()
     
-    # Probabilité de gain
+    # Gain Probability
     prob_profit = (returns > 0).mean()
     
     return {

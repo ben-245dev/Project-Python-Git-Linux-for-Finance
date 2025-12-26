@@ -73,18 +73,18 @@ def ml_predict_direction(df_input: pd.DataFrame):
     df['RSI'] = df.ta.rsi(length=14)
     df['SMA_Diff'] = (df['Close'] - df['Close'].rolling(20).mean()) / df['Close']
     
-    # Target : 1 si le prix de DEMAIN monte, 0 sinon
+    # 1 if next day's close is higher than today's close
     df['Target'] = (df['Close'].shift(-1) > df['Close']).astype(int)
     
     df = df.dropna()
     
-    if len(df) < 100: return None, None, None # Pas assez de données
+    if len(df) < 100: return None, None, None # not enough data
 
     features = ['Returns', 'Vol_5', 'RSI', 'SMA_Diff']
     X = df[features]
     y = df['Target']
     
-    # Split Train/Test (sans mélanger l'ordre temporel)
+    # Split Train/Test 
     split = int(len(X) * 0.8)
     X_train, X_test = X.iloc[:split], X.iloc[split:]
     y_train, y_test = y.iloc[:split], y.iloc[split:]
@@ -92,12 +92,12 @@ def ml_predict_direction(df_input: pd.DataFrame):
     model = RandomForestClassifier(n_estimators=100, max_depth=5, random_state=42)
     model.fit(X_train, y_train)
     
-    # Évaluation
+    # Evaluate
     preds = model.predict(X_test)
     accuracy = accuracy_score(y_test, preds)
     
-    # Prédiction pour demain (basée sur la dernière ligne connue)
+    # Tomorrow prediction
     last_row = X.iloc[[-1]]
-    prob_up = model.predict_proba(last_row)[0][1] # Proba de la classe 1 (Hausse)
+    prob_up = model.predict_proba(last_row)[0][1] # Classe 1 = Up
     
     return prob_up, accuracy, dict(zip(features, model.feature_importances_))

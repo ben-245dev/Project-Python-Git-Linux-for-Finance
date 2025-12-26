@@ -7,22 +7,22 @@ from backend.data_loader import load_ticker_data, load_batch_data
 from backend.quant_stats import calculate_cointegration, calculate_zscore, calculate_kelly_criterion
 
 def page_quant_lab():
-    st.title("🧪 Laboratoire Quantitatif")
+    st.title("🧪 Quantitative Lab")
     st.markdown("---")
 
-    tab1, tab2, tab3 = st.tabs(["⚡ Arbitrage Statistique (Pairs)", "🔍 Screener Algo", "📐 Money Management (Kelly)"])
+    tab1, tab2, tab3 = st.tabs(["⚡ Statistical Arbitrage (Pairs)", "🔍 Screener Algo", "📐 Money Management (Kelly)"])
 
     # --- TAB 1 : PAIRS TRADING ---
     with tab1:
-        st.subheader("Stratégie de retour à la moyenne (Mean Reversion)")
-        st.caption("Cherche à exploiter l'écart temporaire entre deux actifs corrélés.")
+        st.subheader("Mean Reversion strategy")
+        st.caption("Pairs Trading using Cointegration and Z-Score")
         
         c1, c2, c3 = st.columns(3)
-        asset_a = c1.text_input("Actif A", "KO")
-        asset_b = c2.text_input("Actif B", "PEP")
-        period = c3.selectbox("Période", ["1y", "2y", "5y"], index=0)
+        asset_a = c1.text_input("Asset A", "KO")
+        asset_b = c2.text_input("Asset B", "PEP")
+        period = c3.selectbox("Period", ["1y", "2y", "5y"], index=0)
 
-        if st.button("Analyser la Paire"):
+        if st.button("Analysing pairs"):
             df_a = load_ticker_data(asset_a, period)
             df_b = load_ticker_data(asset_b, period)
 
@@ -44,8 +44,8 @@ def page_quant_lab():
                 col_res1.metric("Hedge Ratio", f"{hedge_ratio:.4f}")
                 
                 is_coint = pvalue < 0.05
-                col_res2.metric("P-Value (Cointégration)", f"{pvalue:.4f}", 
-                                delta="Cointégré (Trading possible)" if is_coint else "Pas de relation stable",
+                col_res2.metric("P-Value (Cointegration)", f"{pvalue:.4f}", 
+                                delta="Cointegrated (Trading possible)" if is_coint else "No stat. relation",
                                 delta_color="normal" if is_coint else "inverse")
 
                 # Graphique du Z-Score (Signal de trading)
@@ -56,21 +56,21 @@ def page_quant_lab():
                 fig_z.add_hline(y=2, line_dash="dot", line_color="red", annotation_text="Vente Spread")
                 fig_z.add_hline(y=-2, line_dash="dot", line_color="green", annotation_text="Achat Spread")
                 fig_z.add_hline(y=0, line_color="gray", opacity=0.5)
-                
-                fig_z.update_layout(title="Signaux de Trading (Z-Score)", template="plotly_dark", height=400)
+
+                fig_z.update_layout(title="Trading Signals (Z-Score)", template="plotly_dark", height=400)
                 st.plotly_chart(fig_z, width='stretch')
 
             else:
-                st.error("Impossible de récupérer les données pour ces tickers.")
+                st.error("Impossible to get data.")
 
     # --- TAB 2 : SCREENER ---
     with tab2:
-        st.subheader("Scanner de Marché Automatisé")
-        st.caption("Détecte les opportunités basées sur RSI et SMA.")
+        st.subheader("Automated Market Screener")
+        st.caption("Detects opportunities based on RSI and SMA.")
         
         # Liste par défaut (Secteur Tech US)
         default_list = "AAPL, MSFT, GOOGL, AMZN, TSLA, NVDA, META, NFLX, AMD, INTC, QCOM"
-        tickers_scan = st.text_area("Liste de surveillance (séparés par virgules)", default_list)
+        tickers_scan = st.text_area("List of tickers, separated by commas", default_list)
         
         col_scan_btn, _ = st.columns([1, 4])
         
@@ -114,37 +114,37 @@ def page_quant_lab():
                 
                 progress_bar.progress((i + 1) / len(ticker_list))
             
-            # Affichage DataFrame stylisé
+            # Display results
             if results:
                 df_res = pd.DataFrame(results)
                 
-                # Coloration conditionnelle
+                # Conditionnal formatting
                 def highlight_signal(val):
                     color = 'green' if 'SURVENDU' in val else 'red' if 'SURACHETÉ' in val else 'white'
                     return f'color: {color}'
 
                 st.dataframe(df_res.style.map(highlight_signal, subset=['Signal RSI']), width='stretch')
             else:
-                st.warning("Aucun résultat trouvé.")
+                st.warning("No results found.")
 
     # --- TAB 3 : KELLY CRITERION ---
     with tab3:
-        st.subheader("Optimisation de la taille de position")
+        st.subheader("Position Size Optimization")
         
         col_k1, col_k2 = st.columns(2)
-        win_rate = col_k1.slider("Taux de réussite (Win Rate %)", 0, 100, 50) / 100
-        risk_reward = col_k2.number_input("Ratio Gain/Risque (Reward to Risk)", 0.1, 10.0, 2.0, 0.1)
+        win_rate = col_k1.slider("TWin Rate %", 0, 100, 50) / 100
+        risk_reward = col_k2.number_input("Reward to Risk Ratio", 0.1, 10.0, 2.0, 0.1)
         
         kelly_pct = calculate_kelly_criterion(win_rate, risk_reward)
-        safe_kelly = kelly_pct / 2  # "Half Kelly" est souvent préféré par les pros
+        safe_kelly = kelly_pct / 2  # "Half Kelly" for safety
         
         st.markdown("---")
         
         c_res1, c_res2 = st.columns(2)
-        c_res1.metric("Kelly Complet (Théorique)", f"{kelly_pct:.2%}")
-        c_res2.metric("Half Kelly (Prudent)", f"{safe_kelly:.2%}", help="Recommandé pour réduire la volatilité")
+        c_res1.metric("Full Kelly (Theoretical)", f"{kelly_pct:.2%}")
+        c_res2.metric("Half Kelly (Conservative)", f"{safe_kelly:.2%}", help="Recommended to reduce volatility")
         
         if kelly_pct <= 0:
-            st.error("⚠️ Espérance négative. Ne prenez pas ce trade !")
+            st.error("⚠️ negative expectation. Do not take this trade!")
         else:
-            st.success(f"✅ Vous devriez risquer environ {safe_kelly*100:.1f}% de votre capital sur ce trade.")
+            st.success(f"✅ You should risk about {safe_kelly*100:.1f}% of your capital on this trade.")

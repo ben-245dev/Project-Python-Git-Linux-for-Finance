@@ -14,19 +14,19 @@ def get_news_sentiment(ticker_symbol):
         title = item.get('title', '')
         if not title: continue
             
-        # Analyse du sentiment (-1 à +1)
+        # feeling from (-1 to +1)
         analysis = TextBlob(title)
         score = analysis.sentiment.polarity
         
         sentiment_score += score
         count += 1
-        news_data.append({"Titre": title, "Score": score})
+        news_data.append({"Title": title, "Score": score})
 
     avg_sentiment = sentiment_score / count if count > 0 else 0
     
-    # Interprétation
-    if avg_sentiment > 0.1: label = "Positif 🟢"
-    elif avg_sentiment < -0.1: label = "Négatif 🔴"
-    else: label = "Neutre ⚪"
+    # Interpretation
+    if avg_sentiment > 0.1: label = "Positive 🟢"
+    elif avg_sentiment < -0.1: label = "NNegative 🔴"
+    else: label = "Neutral ⚪"
     
     return label, avg_sentiment, pd.DataFrame(news_data)

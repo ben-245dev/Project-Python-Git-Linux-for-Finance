@@ -18,7 +18,7 @@ TRADING_TIMEZONES = {
     "Tokyo": "Asia/Tokyo",
 }
 
-# Couleurs pour les graphiques
+# Colors fro graphs and UI elements
 COLORS = {
     "primary": "#00c3ff",
     "secondary": "#ff9900",
