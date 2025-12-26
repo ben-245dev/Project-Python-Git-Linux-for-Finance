@@ -9,19 +9,18 @@ from config import TRADING_TIMEZONES
 from backend.data_loader import get_price_series
 
 # ---------------------------------------------------------
-# 1. Composants UI (Horloges, Bannières, Boutons)
+# 1. UI Components
 # ---------------------------------------------------------
 
 def render_trading_clocks():
-    """Affiche les horloges des différentes places boursières."""
-    st.subheader("Horloges Trading")
+    """Display the trading clocks for different exchanges."""
+    st.subheader("Trading Clocks")
     cols = st.columns(len(TRADING_TIMEZONES))
     
     for col, (name, tz_str) in zip(cols, TRADING_TIMEZONES.items()):
         tz = pytz.timezone(tz_str)
         now_local = datetime.now(tz)
         
-        # Style CSS simple pour l'affichage
         col.markdown(
             f"""
             <div style="background-color:#1E1E1E; padding:10px; border-radius:5px; text-align:center; border: 1px solid #333;">
@@ -34,9 +33,9 @@ def render_trading_clocks():
         )
 
 def render_banner(live_data: dict):
-    """Affiche un bandeau défilant avec les prix en direct."""
+    """Display a scrolling banner with live prices."""
     if not live_data:
-        st.warning("Données live indisponibles (Marchés fermés ou API limit)")
+        st.warning("Data not available")
         return
 
     items = []
@@ -56,8 +55,8 @@ def render_banner(live_data: dict):
         unsafe_allow_html=True
     )
 
-def render_export_button(df: pd.DataFrame, filename: str = "export.csv", label="📥 Télécharger CSV"):
-    """Bouton générique pour télécharger un DataFrame en CSV."""
+def render_export_button(df: pd.DataFrame, filename: str = "export.csv", label="📥 Download CSV"):
+    """Generic button to download a DataFrame as CSV."""
     if df.empty:
         return
     csv_buf = io.StringIO()
@@ -73,18 +72,15 @@ def render_export_button(df: pd.DataFrame, filename: str = "export.csv", label="
 # 2. Composants Graphiques (Charts)
 # ---------------------------------------------------------
 
-def render_price_chart(df: pd.DataFrame, ticker: str, chart_type: str = "Courbes"):
-    """Graphique simple pour la page d'accueil."""
+def render_price_chart(df: pd.DataFrame, ticker: str, chart_type: str = "Candles"):
+    """Display financial chart."""
     if df.empty:
-        st.warning("Pas de données à afficher.")
+        st.warning("Not enough data to display.")
         return
     
-    # On utilise get_price_series pour gérer la robustesse des données
     close_data = get_price_series(df, "Close", ticker)
     
     if chart_type == "Bougies":
-        # Pour les bougies, on a besoin de Open/High/Low/Close
-        # On essaie de récupérer les séries, sinon fallback sur Close
         try:
             fig = go.Figure(data=[go.Candlestick(
                 x=df.index,
@@ -95,7 +91,7 @@ def render_price_chart(df: pd.DataFrame, ticker: str, chart_type: str = "Courbes
                 name=ticker
             )])
         except:
-            st.warning("Données OHLC incomplètes pour les bougies, affichage en ligne.")
+            st.warning("Incomplete OHLC data for candlesticks, displaying line chart instead.")
             fig = go.Figure(data=[go.Scatter(x=df.index, y=close_data, mode="lines", name=ticker)])
     else:
         fig = go.Figure(data=[go.Scatter(
@@ -116,11 +112,9 @@ def render_price_chart(df: pd.DataFrame, ticker: str, chart_type: str = "Courbes
 
 def render_advanced_chart(df: pd.DataFrame, ticker: str):
     """
-    Graphique avancé (Pro) avec Subplots :
-    - Row 1: Bougies + Moyennes Mobiles (EMA)
-    - Row 2: RSI
+    advanced chart with candlesticks, moving averages and RSI subplot
     """
-    # Création du subplot (Prix en haut, RSI en bas)
+    
     fig = make_subplots(
         rows=2, cols=1, 
         shared_xaxes=True, 
@@ -136,7 +130,7 @@ def render_advanced_chart(df: pd.DataFrame, ticker: str):
         name='OHLC'
     ), row=1, col=1)
 
-    # 2. Moyennes Mobiles (si calculées dans df)
+    # 2. Moving averages
     if 'EMA_Fast' in df.columns:
         fig.add_trace(go.Scatter(
             x=df.index, y=df['EMA_Fast'], 
@@ -159,11 +153,11 @@ def render_advanced_chart(df: pd.DataFrame, ticker: str):
             name='RSI'
         ), row=2, col=1)
         
-        # Lignes de seuil RSI (30/70)
+        # threshold RSI (30/70)
         fig.add_hline(y=70, line_dash="dot", row=2, col=1, line_color="red", opacity=0.5)
         fig.add_hline(y=30, line_dash="dot", row=2, col=1, line_color="green", opacity=0.5)
         
-        # Zone de fond RSI
+        # RSI background zone
         fig.update_yaxes(range=[0, 100], row=2, col=1)
 
     fig.update_layout(

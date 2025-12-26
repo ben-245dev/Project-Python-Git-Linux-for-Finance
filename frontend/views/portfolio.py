@@ -10,55 +10,55 @@ from backend.simulation import run_monte_carlo
 from backend.metrics import compute_strategy_metrics
 
 def page_portfolio():
-    st.title("🧠 Optimisation & Analyse Avancée")
+    st.title("🧠 Portfolio Optimization & Advanced Analysis")
     
     # --- 1. Configuration ---
-    with st.expander("🛠️ Configuration du Portefeuille", expanded=True):
+    with st.expander("🛠️ Portfolio Configuration", expanded=True):
         col1, col2 = st.columns(2)
         with col1:
-            tickers_input = st.text_input("Actifs (séparés par virgules)", "AAPL, MSFT, GOOGL, NVDA, GLD, BTC-USD")
+            tickers_input = st.text_input("Assets (separated by commas)", "AAPL, MSFT, GOOGL, NVDA, GLD, BTC-USD")
             tickers = [t.strip().upper() for t in tickers_input.split(",") if t.strip()]
         with col2:
-            start_date = st.date_input("Date début historique", pd.to_datetime("2022-01-01"))
+            start_date = st.date_input("Start ", pd.to_datetime("2022-01-01"))
             amount = st.number_input("Capital (€)", value=10000)
 
     if not tickers or len(tickers) < 2:
-        st.warning("Il faut au moins 2 actifs pour faire un portefeuille.")
+        st.warning("Minimum 2 assets required.")
         st.stop()
 
-    # --- Chargement ---
+    # --- Loading ---
     prices = load_batch_data(tickers, start_date, pd.to_datetime("today"))
     if prices.empty:
-        st.error("Erreur de récupération des données.")
+        st.error("Error loading data.")
         return
     
     returns = prices.pct_change().dropna()
 
-    # --- 2. Optimisation avec Contraintes ---
-    st.markdown("### 🤖 Allocation Intelligente (IA)")
+    # --- 2. Optimization under Constraints ---
+    st.markdown("### 🤖 Automatic allocation")
     
     col_opt1, col_opt2 = st.columns([1, 2])
     
     with col_opt1:
-        st.subheader("Paramètres")
-        obj = st.radio("Objectif", ["Maximiser Sharpe (Rentabilité/Risque)", "Minimiser Volatilité (Sécurité)"])
+        st.subheader("Parameters")
+        obj = st.radio("Objective", ["Maximize Sharpe", "Minimize Volatility (Safety)"])
         target = "sharpe" if "Sharpe" in obj else "min_vol"
         
-        st.markdown("**Contraintes de poids :**")
-        min_w = st.slider("Poids Minimum par actif", 0.0, 0.5, 0.01, 0.01)
-        max_w = st.slider("Poids Maximum par actif", 0.1, 1.0, 1.0, 0.05)
+        st.markdown("**Weight Constraints:**")
+        min_w = st.slider("Minimum weight", 0.0, 0.5, 0.01, 0.01)
+        max_w = st.slider("Maximum weight per asset", 0.1, 1.0, 1.0, 0.05)
 
         if st.button("⚡ Optimiser"):
-            # Vérification basique des contraintes
+            # Basic constraint check
             if min_w * len(tickers) > 1.0:
-                st.error("Impossible : Le poids minimum cumulé dépasse 100%. Réduisez le Min.")
+                st.error("Impossible the minimum weights exceed 100%.")
             else:
                 opt_weights, perf = optimize_portfolio_weights(prices, target, min_weight=min_w, max_weight=max_w)
                 if opt_weights:
                     st.session_state['opt_weights'] = opt_weights
                     st.session_state['opt_perf'] = perf
                 else:
-                    st.error("L'optimiseur n'a pas trouvé de solution avec ces contraintes.")
+                    st.error("Didn't find a solution with these constraints.")
 
     with col_opt2:
         if 'opt_weights' in st.session_state:
@@ -69,7 +69,7 @@ def page_portfolio():
             df_w = pd.DataFrame({"Actif": w.keys(), "Poids": w.values()})
             df_w = df_w[df_w["Poids"] > 0.001]
             
-            fig = px.pie(df_w, values="Poids", names="Actif", title="Optimal Allocation", hole=0.4)
+            fig = px.pie(df_w, values="Poids", names="Asset", title="Optimal Allocation", hole=0.4)
             st.plotly_chart(fig, width='stretch')
             
             # Optimizer Metrics
@@ -90,22 +90,21 @@ def page_portfolio():
         final_weights = np.array([1/len(tickers)] * len(tickers))
         st.info("Equiponderated portfolio.")
 
-    # Création indice synthétique
     port_ret = returns.dot(final_weights)
     port_cum = (1 + port_ret).cumprod()
     
-    # Calcul des métriques complètes
+    # Complete Metrics
     m = compute_strategy_metrics(port_ret, port_cum)
 
-    # --- A. Affichage Métriques Avancées ---
+    # --- Advanced Metrics Display ---
     col_m1, col_m2, col_m3, col_m4, col_m5 = st.columns(5)
     col_m1.metric("CAGR (Annuel)", f"{m['cagr']:.2%}")
-    col_m2.metric("Sortino Ratio", f"{m['sortino']:.2f}", help="Performance ajustée du risque de baisse uniquement.")
-    col_m3.metric("Calmar Ratio", f"{m['calmar']:.2f}", help="Rendement annuel / Max Drawdown.")
-    col_m4.metric("Skewness", f"{m['skew']:.2f}", help="Asymétrie : < 0 signifie risque de krach fréquent.")
-    col_m5.metric("Kurtosis", f"{m['kurtosis']:.2f}", help="Queue de distribution : > 3 signifie événements extrêmes fréquents.")
+    col_m2.metric("Sortino Ratio", f"{m['sortino']:.2f}", help="Performance adjusted for downside risk only.")
+    col_m3.metric("Calmar Ratio", f"{m['calmar']:.2f}", help="Annual return / Max Drawdown.")
+    col_m4.metric("Skewness", f"{m['skew']:.2f}", help="Asymmetry: < 0 indicates frequent crash risk.")
+    col_m5.metric("Kurtosis", f"{m['kurtosis']:.2f}", help="Tail of distribution: > 3 indicates frequent extreme events.")
 
-    # --- B. Corrélations ---
+    # --- B. Correlations ---
     st.subheader("🔗 Correlations")
     
     tab_corr1, tab_corr2 = st.tabs(["Matrix (Heatmap)", "Dynamic (Rolling)"])
@@ -131,7 +130,6 @@ def page_portfolio():
             fig_roll = go.Figure()
             fig_roll.add_trace(go.Scatter(x=rolling_corr.index, y=rolling_corr, mode='lines', name=f"Corr {asset_a}/{asset_b}"))
             
-            # Ajout ligne zéro
             fig_roll.add_hline(y=0, line_dash="dot", line_color="white")
             fig_roll.add_hline(y=1, line_dash="dot", line_color="gray", opacity=0.3)
             fig_roll.add_hline(y=-1, line_dash="dot", line_color="gray", opacity=0.3)
@@ -146,14 +144,13 @@ def page_portfolio():
         else:
             st.info("Select two different assets.")
 
-# ... (Le début du fichier reste identique jusqu'à la section Monte Carlo) ...
 
-    # --- 4. Module de Stress Test Avancé ---
+    # --- 4. Advanced Stress Test Module ---
     st.markdown("### 🔮 Stress Test & Risk Management")
     
-    # Onglets pour séparer les approches
-    tab_mc, tab_crash = st.tabs(["🎲 Simulation Monte Carlo (Futur Probable)", "💥 Crash Test (Historical Scenarios)"])
-
+    # Tabs to separate approaches
+    tab_mc, tab_crash = st.tabs(["🎲 Monte Carlo Simulation (Future Probable)", "💥 Crash Test (Historical Scenarios)"])
+    
     # === TAB 1 : MONTE CARLO ===
     with tab_mc:
         st.caption("Projection of 500 possible scenarios over 1 year, based on current volatility.")
@@ -168,12 +165,8 @@ def page_portfolio():
                 with st.spinner("Calculating trajectories..."):
                     # We use the synthetic index calculated above
                     current_capital = port_cum.iloc[-1] * amount
-                    
-                    # Simulation sur les rendements
-                    # On recrée une série fictive partant du capital actuel
                     sim_df = run_monte_carlo(port_cum * amount, days=252*sim_years, simulations=n_sims)
                     
-                    # Stockage en session pour ne pas recalculer à chaque interaction
                     st.session_state['mc_results'] = sim_df
                     st.session_state['mc_capital'] = current_capital
 
@@ -182,19 +175,17 @@ def page_portfolio():
                 sim_df = st.session_state['mc_results']
                 start_cap = st.session_state['mc_capital']
                 
-                # --- GRAPHIQUE ---
-                # centiles (5%, 25%, 50%, 75%, 95%)
-                
-                # Calcul des centiles jour par jour
+                # --- GRAPHICS ---
+                # quantiles (5%, 25%, 50%, 75%, 95%)
                 p05 = sim_df.quantile(0.05, axis=1)
                 p25 = sim_df.quantile(0.25, axis=1)
-                p50 = sim_df.median(axis=1) # Scénario Central
+                p50 = sim_df.median(axis=1) # Central line
                 p75 = sim_df.quantile(0.75, axis=1)
                 p95 = sim_df.quantile(0.95, axis=1)
                 
                 fig_mc = go.Figure()
                 
-                # Zone extrême (5% - 95%)
+                # Extremal areas (5% - 95%)
                 fig_mc.add_trace(go.Scatter(
                     x=sim_df.index, y=p95, mode='lines', line=dict(width=0), showlegend=False, hoverinfo='skip'
                 ))
@@ -203,7 +194,7 @@ def page_portfolio():
                     fillcolor='rgba(255, 0, 0, 0.1)', name='Intervalle 90%'
                 ))
                 
-                # Zone centrale (25% - 75%)
+                # Central areas (25% - 75%)
                 fig_mc.add_trace(go.Scatter(
                     x=sim_df.index, y=p75, mode='lines', line=dict(width=0), showlegend=False, hoverinfo='skip'
                 ))
@@ -212,7 +203,7 @@ def page_portfolio():
                     fillcolor='rgba(0, 195, 255, 0.2)', name='Intervalle 50%'
                 ))
                 
-                # Médiane
+                # Median
                 fig_mc.add_trace(go.Scatter(
                     x=sim_df.index, y=p50, mode='lines', line=dict(color='white', width=2), name='Scenario Median'
                 ))
@@ -226,12 +217,9 @@ def page_portfolio():
                 )
                 st.plotly_chart(fig_mc, width='stretch')
                 
-                # --- ANALYSE DES RÉSULTATS ---
+                # --- Results Metrics ---
                 final_values = sim_df.iloc[-1]
-                metrics = compute_risk_metrics(final_values, start_cap) # Fonction à importer du backend !
-                
-                # Import local si besoin, ou assurez-vous de l'importer en haut du fichier
-                # from backend.simulation import compute_risk_metrics
+                metrics = compute_risk_metrics(final_values, start_cap)
                 
                 st.markdown("#### 📊 Risk Analysis (End of Period)")
                 m1, m2, m3, m4 = st.columns(4)
@@ -253,7 +241,7 @@ def page_portfolio():
                 )
                 
                 m4.metric(
-                    "Proba. Perte > 20%", 
+                    "Proba. Loss > 20%", 
                     f"{metrics['Prob_Crash']:.1%}",
                     delta_color="inverse"
                 )
@@ -291,6 +279,6 @@ def page_portfolio():
             st.plotly_chart(fig_crash, width='stretch')
             
         with c_crash2:
-            st.error(f"Impact Max : {drawdown_crash:.2%}")
-            st.write(f"Votre capital would fall to **{min_val:,.0f} €**.")
+            st.error(f"Max Impact : {drawdown_crash:.2%}")
+            st.write(f"Your capital would fall to **{min_val:,.0f} €**.")
             st.info("💡 Supposing your assets are correlated with the overall market during a crash.")

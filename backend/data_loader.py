@@ -3,11 +3,10 @@ import yfinance as yf
 import streamlit as st
 from config import INDICES
 
-@st.cache_data(ttl=60)  # Cache de 1 minute pour le live
+@st.cache_data(ttl=60)  # 1 minute cache
 def get_live_index_data():
     data = {}
     tickers = list(INDICES.values())
-    # Téléchargement groupé pour la vitesse
     try:
         df = yf.download(tickers, period="1d", interval="1m", progress=False)["Close"]
         if df.empty: return {}
@@ -25,10 +24,9 @@ def get_live_index_data():
         pass
     return data
 
-@st.cache_data(ttl=3600)  # Cache de 1 heure pour l'historique
+@st.cache_data(ttl=3600) # 1 hour cache
 def load_ticker_data(ticker: str, period: str) -> pd.DataFrame:
     try:
-        # auto_adjust=True ajuste les prix pour les dividendes/splits
         df = yf.download(ticker, period=period, auto_adjust=True, progress=False, multi_level_index=False)
         return df.dropna()
     except Exception:
@@ -44,8 +42,8 @@ def load_batch_data(tickers: list, start_date, end_date) -> pd.DataFrame:
 
 def get_price_series(df: pd.DataFrame, field: str, ticker: str) -> pd.Series:
     """
-    Extrait une série spécifique (Close, Open, etc.) d'un DataFrame 
-    en gérant les cas MultiIndex (plusieurs tickers) ou SingleIndex.
+    Get the price series for a specific field and ticker from a DataFrame.
+    Handles both MultiIndex and single Index DataFrames.
     """
     if df.empty:
         return pd.Series()

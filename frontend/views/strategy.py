@@ -79,7 +79,7 @@ def page_strategy():
     bh_equity_scaled = strategies["Buy & Hold"]["equity"] * initial_price
 
     # --- Display ---
-    tab_backtest, tab_forecast, tab_ai = st.tabs(["📊 Backtest", "🔮 Prévision (ARIMA)", "🤖 IA"])
+    tab_backtest, tab_forecast, tab_ai = st.tabs(["📊 Backtest", "🔮 Forecast (ARIMA)", "🤖 AI"])
 
     with tab_backtest:
         col_m1, col_m2, col_m3, col_m4 = st.columns(4)
@@ -96,7 +96,7 @@ def page_strategy():
         fig = make_subplots(rows=rows, cols=1, shared_xaxes=True, vertical_spacing=0.05, row_heights=row_heights)
         
         # 1. Curves Equity
-        fig.add_trace(go.Scatter(x=strat_equity_scaled.index, y=strat_equity_scaled, name="Stratégie", line=dict(color="#00c3ff", width=2)), row=1, col=1)
+        fig.add_trace(go.Scatter(x=strat_equity_scaled.index, y=strat_equity_scaled, name="Strategy", line=dict(color="#00c3ff", width=2)), row=1, col=1)
         fig.add_trace(go.Scatter(x=bh_equity_scaled.index, y=bh_equity_scaled, name="Buy & Hold", line=dict(color="gray", dash="dot")), row=1, col=1)
 
         # 2. Signals Buy/Sell
@@ -158,8 +158,8 @@ def page_strategy():
 
     # === TAB 2 : FORECAST (ARIMA) ===
     with tab_forecast:
-        st.subheader("Prévision Statistique (ARIMA)")
-        horizon = st.slider("Horizon (jours)", 7, 90, 30)
+        st.subheader("Statistical Forecast (ARIMA)")
+        horizon = st.slider("Horizon (days)", 7, 90, 30)
         try:
             with st.spinner("Calcul ARIMA..."):
                 forecast_df = arima_forecast(df["Close"], horizon=horizon)
@@ -171,16 +171,16 @@ def page_strategy():
                 low_return = (forecast_df["ci_low"].iloc[-1] - last_real_price) / last_real_price
                 high_return = (forecast_df["ci_high"].iloc[-1] - last_real_price) / last_real_price
 
-                st.markdown(f"**Projections à {horizon} jours** (Prix : {last_real_price:,.2f} $)")
+                st.markdown(f"**Forecast at {horizon} days** (Price: {last_real_price:,.2f} $)")
                 c1, c2, c3 = st.columns(3)
-                c1.metric("Pessimiste", f"{low_return:+.2%}", f"{forecast_df['ci_low'].iloc[-1]:,.2f} $", delta_color="off")
+                c1.metric("Pessimistic", f"{low_return:+.2%}", f"{forecast_df['ci_low'].iloc[-1]:,.2f} $", delta_color="off")
                 c2.metric("🎯 Central", f"{exp_return:+.2%}", f"{target_price:,.2f} $", delta_color="normal")
-                c3.metric("Optimiste", f"{high_return:+.2%}", f"{forecast_df['ci_high'].iloc[-1]:,.2f} $", delta_color="normal")
+                c3.metric("Optimistic", f"{high_return:+.2%}", f"{forecast_df['ci_high'].iloc[-1]:,.2f} $", delta_color="normal")
                 
                 fig_f = go.Figure()
                 recent_df = df["Close"].tail(90)
-                fig_f.add_trace(go.Scatter(x=recent_df.index, y=recent_df, name="Historique", line=dict(color="rgba(255,255,255,0.5)")))
-                fig_f.add_trace(go.Scatter(x=forecast_df.index, y=forecast_df["y_pred"], name="Prévision", line=dict(color="#00c3ff", dash="dash")))
+                fig_f.add_trace(go.Scatter(x=recent_df.index, y=recent_df, name="Historical", line=dict(color="rgba(255,255,255,0.5)")))
+                fig_f.add_trace(go.Scatter(x=forecast_df.index, y=forecast_df["y_pred"], name="Forecast", line=dict(color="#00c3ff", dash="dash")))
                 fig_f.add_trace(go.Scatter(x=forecast_df.index, y=forecast_df["ci_high"], line=dict(width=0), showlegend=False))
                 fig_f.add_trace(go.Scatter(x=forecast_df.index, y=forecast_df["ci_low"], fill='tonexty', fillcolor='rgba(0, 195, 255, 0.1)', line=dict(width=0), name="Interval 95%"))
                 fig_f.update_layout(template="plotly_dark", height=450)
@@ -190,16 +190,16 @@ def page_strategy():
         except Exception as e:
             st.error(f"Model error: {e}")
 
-    # === TAB 3 : IA ===
+    # === TAB 3 : AI ===
     with tab_ai:
-        st.subheader("🤖 IA")
+        st.subheader("🤖 AI")
         prob_up, accuracy, feature_imp = ml_predict_direction(df)
         if prob_up is not None:
             c_ai1, c_ai2 = st.columns(2)
             with c_ai1:
-                fig_g = go.Figure(go.Indicator(mode = "gauge+number", value = prob_up * 100, title = {'text': "Proba Hausse"}, gauge = {'axis': {'range': [0, 100]}, 'bar': {'color': "#00c3ff"}}))
+                fig_g = go.Figure(go.Indicator(mode = "gauge+number", value = prob_up * 100, title = {'text': "Probability UP"}, gauge = {'axis': {'range': [0, 100]}, 'bar': {'color': "#00c3ff"}}))
                 fig_g.update_layout(height=300, paper_bgcolor="rgba(0,0,0,0)")
                 st.plotly_chart(fig_g, width='stretch')
             with c_ai2:
-                st.metric("Précision", f"{accuracy:.1%}")
+                st.metric("Accuracy", f"{accuracy:.1%}")
                 if feature_imp: st.bar_chart(pd.Series(feature_imp))
