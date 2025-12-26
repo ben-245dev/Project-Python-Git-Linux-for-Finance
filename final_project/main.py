@@ -1,7 +1,9 @@
 import streamlit as st
 from streamlit_autorefresh import st_autorefresh
+import datetime
+# Import des nouvelles fonctions de settings
+from backend.orders import save_user_setting, get_user_setting
 
-# Configuration globale DOIT être la toute première ligne
 st.set_page_config(
     page_title="Quantitative Trading Pro",
     page_icon="📈",
@@ -25,8 +27,23 @@ def main():
     # Indicateur de dernière mise à jour
     import datetime
     st.sidebar.caption(f"Dernière MAJ: {datetime.datetime.now().strftime('%H:%M:%S')}")
+
+    # --- CONFIGURATION EMAIL UTILISATEUR ---
+    with st.sidebar.expander("📧 Configurer les Alertes"):
+        current_email = get_user_setting("user_email") or ""
+        email_input = st.text_input("Votre Email pour recevoir le rapport :", value=current_email)
+
+        if st.button("Sauvegarder Email"):
+            # Vérification basique du format de l'email
+            if "@" in email_input and "." in email_input:
+                save_user_setting("user_email", email_input)
+                st.success("Email enregistré !")
+            else:
+                st.error("Format invalide.")
+
     
     st.sidebar.markdown("---")
+    
     
     page = st.sidebar.radio(
         "Navigation",

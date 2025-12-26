@@ -171,3 +171,35 @@ def get_current_prices(tickers_list):
     except Exception as e:
         print(f"Erreur pricing: {e}")
         return {}
+
+def init_settings_db():
+    """Crée une table pour stocker les préférences utilisateur (email)."""
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS settings (
+            key TEXT PRIMARY KEY,
+            value TEXT
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+def save_user_setting(key, value):
+    """Sauvegarde une configuration (ex: 'user_email')."""
+    init_settings_db() # Sécurité
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", (key, value))
+    conn.commit()
+    conn.close()
+
+def get_user_setting(key):
+    """Récupère une configuration."""
+    init_settings_db()
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("SELECT value FROM settings WHERE key=?", (key,))
+    result = c.fetchone()
+    conn.close()
+    return result[0] if result else None
