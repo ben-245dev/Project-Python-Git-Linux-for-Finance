@@ -70,7 +70,7 @@ def page_portfolio():
             df_w = df_w[df_w["Poids"] > 0.001]
             
             fig = px.pie(df_w, values="Poids", names="Actif", title="Allocation Optimale", hole=0.4)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width='stretch')
             
             # Métriques Optimiseur
             c1, c2, c3 = st.columns(3)
@@ -113,7 +113,7 @@ def page_portfolio():
     with tab_corr1:
         corr_matrix = returns.corr()
         fig_corr = px.imshow(corr_matrix, text_auto=".2f", aspect="auto", color_continuous_scale="RdBu_r", title="Matrice de Corrélation Statique")
-        st.plotly_chart(fig_corr, use_container_width=True)
+        st.plotly_chart(fig_corr, width='stretch')
 
     with tab_corr2:
         st.caption("Visualisez comment la corrélation entre deux actifs évolue dans le temps.")
@@ -142,7 +142,7 @@ def page_portfolio():
                 template="plotly_dark",
                 height=400
             )
-            st.plotly_chart(fig_roll, use_container_width=True)
+            st.plotly_chart(fig_roll, width='stretch')
         else:
             st.info("Sélectionnez deux actifs différents.")
 
@@ -224,7 +224,7 @@ def page_portfolio():
                     height=400,
                     hovermode="x unified"
                 )
-                st.plotly_chart(fig_mc, use_container_width=True)
+                st.plotly_chart(fig_mc, width='stretch')
                 
                 # --- ANALYSE DES RÉSULTATS ---
                 final_values = sim_df.iloc[-1]
@@ -288,7 +288,7 @@ def page_portfolio():
                 showarrow=True, arrowhead=1
             )
             fig_crash.update_layout(template="plotly_dark", title=f"Simulation : Impact {crash_scenario}", xaxis_title="Jours de crise")
-            st.plotly_chart(fig_crash, use_container_width=True)
+            st.plotly_chart(fig_crash, width='stretch')
             
         with c_crash2:
             st.error(f"Impact Max : {drawdown_crash:.2%}")

@@ -112,7 +112,7 @@ def render_price_chart(df: pd.DataFrame, ticker: str, chart_type: str = "Courbes
         height=400,
         xaxis_title=None
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
 
 def render_advanced_chart(df: pd.DataFrame, ticker: str):
     """
@@ -174,4 +174,4 @@ def render_advanced_chart(df: pd.DataFrame, ticker: str):
         legend=dict(orientation="h", y=1.02, x=0)
     )
     
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')

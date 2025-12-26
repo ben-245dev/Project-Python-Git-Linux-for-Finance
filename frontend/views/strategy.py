@@ -157,7 +157,7 @@ def page_strategy():
             fig.add_trace(go.Scatter(x=dd.index, y=dd, fill='tozeroy', line=dict(color='red', width=0), name="Drawdown"), row=2, col=1)
 
         fig.update_layout(height=700 if is_complex else 600, template="plotly_dark", title=f"Backtest : {selected_strat}")
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
 
     # === TAB 2 : FORECAST (ARIMA) ===
     with tab_forecast:
@@ -187,7 +187,7 @@ def page_strategy():
                 fig_f.add_trace(go.Scatter(x=forecast_df.index, y=forecast_df["ci_high"], line=dict(width=0), showlegend=False))
                 fig_f.add_trace(go.Scatter(x=forecast_df.index, y=forecast_df["ci_low"], fill='tonexty', fillcolor='rgba(0, 195, 255, 0.1)', line=dict(width=0), name="Intervalle 95%"))
                 fig_f.update_layout(template="plotly_dark", height=450)
-                st.plotly_chart(fig_f, use_container_width=True)
+                st.plotly_chart(fig_f, width='stretch')
             else:
                 st.warning("Pas assez de données pour ARIMA.")
         except Exception as e:
@@ -202,7 +202,7 @@ def page_strategy():
             with c_ai1:
                 fig_g = go.Figure(go.Indicator(mode = "gauge+number", value = prob_up * 100, title = {'text': "Proba Hausse"}, gauge = {'axis': {'range': [0, 100]}, 'bar': {'color': "#00c3ff"}}))
                 fig_g.update_layout(height=300, paper_bgcolor="rgba(0,0,0,0)")
-                st.plotly_chart(fig_g, use_container_width=True)
+                st.plotly_chart(fig_g, width='stretch')
             with c_ai2:
                 st.metric("Précision", f"{accuracy:.1%}")
                 if feature_imp: st.bar_chart(pd.Series(feature_imp))

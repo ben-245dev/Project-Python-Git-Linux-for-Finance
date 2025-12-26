@@ -116,14 +116,14 @@ def page_paper_trading():
                 "P&L ($)": "{:+.2f} $",
                 "P&L (%)": "{:+.2f} %"
             }).map(color_pnl, subset=['P&L ($)', 'P&L (%)']),
-            use_container_width=True
+            width='stretch'
         )
 
         # Graphique Répartition (Pie Chart)
         if total_value > 0:
             fig = go.Figure(data=[go.Pie(labels=positions_df["Ticker"], values=positions_df["Valeur Actuelle"], hole=.4)])
             fig.update_layout(title="Allocation d'actifs", template="plotly_dark", height=350)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width='stretch')
 
     else:
         st.info("Votre portefeuille est vide. Passez votre premier ordre ci-dessus pour commencer !")
@@ -134,4 +134,4 @@ def page_paper_trading():
     st.markdown("---")
     with st.expander("📜 Historique des Transactions"):
         history_df = get_transaction_history()
-        st.dataframe(history_df, use_container_width=True)
+        st.dataframe(history_df, width='stretch')

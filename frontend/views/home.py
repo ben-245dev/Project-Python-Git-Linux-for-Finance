@@ -73,7 +73,7 @@ def page_home():
                 yaxis_title="Prix ($)",
                 legend=dict(orientation="h", y=1.02)
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width='stretch')
             
             # Bouton export
             render_export_button(df, f"history_{ticker}.csv")

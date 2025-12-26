@@ -58,7 +58,7 @@ def page_quant_lab():
                 fig_z.add_hline(y=0, line_color="gray", opacity=0.5)
                 
                 fig_z.update_layout(title="Signaux de Trading (Z-Score)", template="plotly_dark", height=400)
-                st.plotly_chart(fig_z, use_container_width=True)
+                st.plotly_chart(fig_z, width='stretch')
 
             else:
                 st.error("Impossible de récupérer les données pour ces tickers.")
@@ -123,7 +123,7 @@ def page_quant_lab():
                     color = 'green' if 'SURVENDU' in val else 'red' if 'SURACHETÉ' in val else 'white'
                     return f'color: {color}'
 
-                st.dataframe(df_res.style.map(highlight_signal, subset=['Signal RSI']), use_container_width=True)
+                st.dataframe(df_res.style.map(highlight_signal, subset=['Signal RSI']), width='stretch')
             else:
                 st.warning("Aucun résultat trouvé.")
 
