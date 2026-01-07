@@ -98,7 +98,7 @@ def page_portfolio():
 
     # --- Advanced Metrics Display ---
     col_m1, col_m2, col_m3, col_m4, col_m5 = st.columns(5)
-    col_m1.metric("CAGR (Annuel)", f"{m['cagr']:.2%}")
+    col_m1.metric("CAGR (Annual)", f"{m['cagr']:.2%}")
     col_m2.metric("Sortino Ratio", f"{m['sortino']:.2f}", help="Performance adjusted for downside risk only.")
     col_m3.metric("Calmar Ratio", f"{m['calmar']:.2f}", help="Annual return / Max Drawdown.")
     col_m4.metric("Skewness", f"{m['skew']:.2f}", help="Asymmetry: < 0 indicates frequent crash risk.")
